@@ -30,3 +30,8 @@ void convolution_nhwc_halide(float* src, float* kernel, float* dst,
                              int inpChannels, int outChannels, int height, int width);
 void convolution_opencv(const cv::Mat& src, const cv::Mat& weights, cv::Mat& dst,
                         int inpChannels, int outChannels);
+
+void convolution_int8_halide(int32_t* src, int32_t* kernel, int32_t* bias, int32_t* dst,
+                             int inpChannels, int outChannels, int height, int width,
+                             int32_t inpZero, int32_t outZero,
+                             float inpScale, float* kernelScales, float outScale);

@@ -16,10 +16,12 @@
   #include <HalideBuffer.h>
   #include "convolution_nchw.h"
   #include "convolution_nhwc.h"
+  #include "convolution_int8.h"
   using namespace Halide::Runtime;
 #else
   #include <Halide.h>
   using namespace Halide;
+  using namespace Halide::ConciseCasts;
 #endif
 
 static const int batch = 1;
@@ -171,4 +173,88 @@ void convolution_opencv(const cv::Mat& src, const cv::Mat& weights, cv::Mat& dst
     }
     net.setInput(src);
     dst = net.forward();
+}
+
+void convolution_int8_halide(int32_t* src, int32_t* weights_, int32_t* bias_, int32_t* dst,
+                             int inpChannels, int outChannels, int height, int width,
+                             int32_t inpZero, int32_t outZero,
+                             float inpScale, float* kernelScales, float outScale) {
+    int kW = 1;
+    int kH = 1;
+
+    Buffer<int32_t> input(src, {inpChannels, width, height, batch});
+    Buffer<int32_t> weights(weights_, {outChannels, 1, 1, inpChannels});
+    Buffer<int32_t> bias(bias_, {outChannels});
+    Buffer<int32_t> output(dst, {outChannels, width, height, batch});
+#ifdef __riscv
+    convolution_int8(input, weights, output);
+#else
+    static Func conv("convolution_int8");
+    if (!conv.defined()) {
+        input.set_name("input");
+        weights.set_name("weights");
+        bias.set_name("bias");
+
+        Buffer<int32_t> scales(16);
+        scales(0) = 1800;
+        scales(1) = 1919;
+        scales(2) = 1723;
+        scales(3) = 1762;
+        scales(4) = 1494;
+        scales(5) = 1984;
+        scales(6) = 3761;
+        scales(7) = 1069;
+        scales(8) = 3507;
+        scales(9) = 3278;
+        scales(10) = 2149;
+        scales(11) = 2703;
+        scales(12) = 1022;
+        scales(13) = 2618;
+        scales(14) = 3400;
+        scales(15) = 2142;
+
+        Halide::Var x("x"), y("y"), c("c"), n("n");
+        Halide::RDom r(0, kW, 0, kH, 0, inpChannels);
+        Halide::Expr kx = x * stride + r.x;
+        Halide::Expr ky = y * stride + r.y;
+        Halide::Expr kc = r.z;
+
+        Expr input16 = input(kc, kx, ky, n) + inpZero;
+        Expr weights16 = weights(c, r.x, r.y, r.z);
+        Expr convolved = sum(input16 * weights16) + bias(c);
+        conv(c, x, y, n) = ((scales(c) * convolved) >> 21) - outZero;
+
+        // Schedule
+        conv.bound(x, 0, width)
+            .bound(y, 0, height)
+            .bound(c, 0, outChannels)
+            .bound(n, 0, batch);
+        conv.vectorize(c, 16);
+
+        // Compile
+        Target target;
+        target.os = Target::OS::Linux;
+        target.arch = Target::Arch::RISCV;
+        target.bits = 64;
+        target.vector_bits = 128;
+
+        // Tested XuanTie C906 has 128-bit vector unit
+        CV_Assert(target.vector_bits <= 128);
+
+        std::vector<Target::Feature> features;
+        features.push_back(Target::RVV);
+        features.push_back(Target::NoAsserts);
+        features.push_back(Target::NoRuntime);
+        target.set_features(features);
+
+        std::cout << target << std::endl;
+
+        conv.print_loop_nest();
+
+        // Dump AOT code
+        std::string prefix = "convolution_int8";
+        conv.compile_to_header(prefix + ".h", {input, weights}, prefix, target);
+        conv.compile_to_assembly(prefix + ".s", {input, weights}, prefix, target);
+    }
+#endif
 }

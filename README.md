@@ -78,6 +78,10 @@ OS: [20211230_LicheeRV_debian_d1_hdmi_8723ds](https://mega.nz/folder/lx4CyZBA#Pi
 | Halide | NCHW | 698.27ms |
 | Halide | NHWC | 418.95ms |
 
+| Convolution INT8<br>input: 1x40x56x56<br>kernel: 1x1<br>output: 1x16x56x56 | Layout | Median time |
+|---|---|---|
+| Halide | NHWC | 5.26ms |
+
 ## Generate AOT kernels
 
 If you want regenerate AOT artifacts or add new algorithms, build the project on x86:

@@ -165,7 +165,7 @@ PERF_TEST(convolution_nhwc, halide) {
     static const int height = 128;
     static const int width = 128;
     Mat src({1, height, width, ic}, CV_32F);
-    Mat kernel({oc, ic, 3, 3}, CV_32F);
+    Mat kernel({ic, 3, 3, oc}, CV_32F);
     Mat dst({1, height - 2, width - 2, oc}, CV_32F);
     randn(src, 0, 1);
     randn(kernel, 0, 1);
@@ -175,5 +175,62 @@ PERF_TEST(convolution_nhwc, halide) {
                                 ic, oc, height, width);
     PERF_SAMPLE_END()
 
+    SANITY_CHECK_NOTHING();
+}
+
+Mat readFromFile(const std::string& path, const std::vector<int>& shape, int dtype) {
+    std::ifstream ifs(path.c_str(), std::ios::binary);
+    CV_Assert(ifs.is_open());
+
+    Mat m(shape, dtype);
+    ifs.read((char*)m.data, m.total() * m.elemSize());
+    CV_Assert((size_t)ifs.gcount() == m.total() * m.elemSize());
+
+    return m;
+}
+
+PERF_TEST(convolution_int8, halide) {
+    static const int ic = 40;
+    static const int oc = 16;
+    static const int height = 56;
+    static const int width = 56;
+    Mat src = readFromFile("conv_inp.bin", {1, height, width, ic}, CV_8S);
+    Mat kernel = readFromFile("kernel.bin", {ic, 1, 1, oc}, CV_8S);
+    Mat bias = readFromFile("bias.bin", {oc}, CV_32S);
+    Mat dst({1, height, width, oc}, CV_32S);
+    src.convertTo(src, CV_32S);
+    kernel.convertTo(kernel, CV_32S);
+
+    int32_t inpZero = 128;
+    int32_t outZero = -7;
+    float inpScale = 0.0235294122248888;
+    float outScale = 0.21487019956111908;
+    std::vector<float> kernelScales = {0.00783687736839056,
+                                        0.008358268067240715,
+                                        0.007501534186303616,
+                                        0.007673418149352074,
+                                        0.006506798323243856,
+                                        0.008637329563498497,
+                                        0.016377447172999382,
+                                        0.004656280856579542,
+                                        0.015269875526428223,
+                                        0.01427433267235756,
+                                        0.009358197450637817,
+                                        0.011772086843848228,
+                                        0.004448991268873215,
+                                        0.011401159688830376,
+                                        0.014806065708398819,
+                                        0.00932697020471096};
+
+    PERF_SAMPLE_BEGIN()
+        convolution_int8_halide(src.ptr<int32_t>(), kernel.ptr<int32_t>(), bias.ptr<int32_t>(), dst.ptr<int32_t>(),
+                                ic, oc, height, width,
+                                inpZero, outZero, inpScale, kernelScales.data(), outScale);
+    PERF_SAMPLE_END()
+
+    Mat ref = readFromFile("conv_out.bin", {1, height, width, oc}, CV_8S);
+    ref.convertTo(ref, CV_32S);
+
+    std::cout << norm(ref, dst, NORM_INF) << std::endl;
     SANITY_CHECK_NOTHING();
 }
