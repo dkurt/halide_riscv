@@ -7,7 +7,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
 
     - name: Download GCC
       run: |
@@ -25,35 +27,32 @@ jobs:
       run: |
         export PATH=${{ github.workspace }}/xuantie-gcc/bin/:$PATH
 
-        cmake \
+        mkdir build_rv64 && cd build_rv64
+        cmake .. \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/halide_riscv/riscv64-071.toolchain.cmake \
-            -DHalide_INCLUDE_DIRS=${{ github.workspace }}/Halide/src/runtime \
-            -S halide_riscv -B build_rv64
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/riscv64-071.toolchain.cmake \
+            -DHalide_INCLUDE_DIRS=${{ github.workspace }}/Halide/src/runtime
 
-        cmake --build build_rv64 -j$(nproc --all)
+        make -j$(nproc --all)
 
-  #   - name: Upload binaries
-  #     uses: actions/upload-artifact@v2
-  #     with:
-  #       name: openvino_debian10_armhf
-  #       path: |
-  #         openvino_debian10_armhf.tar.gz
-  #         opencv_debian10_armhf_tests.tar.gz
-  # test:
-  #   if: ${{ false }}
-  #   needs: build
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Download binaries
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: openvino_debian10_armhf
+    - name: Upload binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: halide_riscv
+        path: |
+          build_rv64/test_algo
+          build_rv64/perf_algo
+          build_rv64/libalgos.so
+          build_rv64/opencv-prefix/src/opencv-build/lib/*
 
-  #     - name: Unpack
-  #       run: |
-  #         tar -xf openvino_debian10_armhf.tar.gz
-  #         tar -xf opencv_debian10_armhf_tests.tar.gz
+  test:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: halide_riscv
 
   #     - name: Synchronize test data
   #       run: |
