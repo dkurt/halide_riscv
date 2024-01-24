@@ -1,0 +1,71 @@
+name: Test on RISC-V
+
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Download GCC
+      run: |
+        gdown https://drive.google.com/uc?id=1U3JaUqWyRYvlhfA3lVEfwu56em-Gwonl
+        mkdir xuantie-gcc && cd xuantie-gcc
+        tar -xf xuantie-gcc-v2.8.0.tar.gz
+
+    - name: Clone Halide headeres
+      run: |
+        git clone --depth 1 -b v16.0.0 https://github.com/halide/Halide
+
+    - name: Build
+      run: |
+        export PATH=${{ github.workspace }}/xuantie-gcc/bin/:$PATH
+
+        cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/halide_riscv/riscv64-071.toolchain.cmake \
+            -DHalide_INCLUDE_DIRS=${{ github.workspace }}/Halide/src/runtime \
+            -S halide_riscv -B build_rv64
+
+        cmake --build build_rv64 -j$(nproc --all)
+
+  #   - name: Upload binaries
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       name: openvino_debian10_armhf
+  #       path: |
+  #         openvino_debian10_armhf.tar.gz
+  #         opencv_debian10_armhf_tests.tar.gz
+  # test:
+  #   if: ${{ false }}
+  #   needs: build
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Download binaries
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: openvino_debian10_armhf
+
+  #     - name: Unpack
+  #       run: |
+  #         tar -xf openvino_debian10_armhf.tar.gz
+  #         tar -xf opencv_debian10_armhf_tests.tar.gz
+
+  #     - name: Synchronize test data
+  #       run: |
+  #         cd $HOME/opencv_extra
+  #         git pull origin HEAD
+  #         cd testdata/dnn
+  #         python download_models.py
+
+  #     # Type "ulimit -s unlimited" to solve "Resource temporarily unavailable"
+  #     - name: Run tests
+  #       run: |
+  #         export OPENCV_TEST_DATA_PATH=$HOME/opencv_extra/testdata
+  #         export OPENCV_DNN_TEST_DATA_PATH=$HOME/opencv_extra/testdata
+  #         source openvino_debian10_armhf/bin/setupvars.sh
+  #         cd opencv/build
+  #         ulimit -s unlimited
+  #         ./bin/opencv_test_dnn --gtest_param_filter=*MYRIAD*
