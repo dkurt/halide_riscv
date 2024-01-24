@@ -11,9 +11,11 @@ jobs:
 
     - name: Download GCC
       run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install gdown
         gdown https://drive.google.com/uc?id=1U3JaUqWyRYvlhfA3lVEfwu56em-Gwonl
         mkdir xuantie-gcc && cd xuantie-gcc
-        tar -xf xuantie-gcc-v2.8.0.tar.gz
+        tar -xf ../xuantie-gcc-v2.8.0.tar.gz
 
     - name: Clone Halide headeres
       run: |
