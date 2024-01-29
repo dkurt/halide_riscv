@@ -21,7 +21,7 @@ jobs:
 
     - name: Download Halide
       run: |
-        gdown https://drive.google.com/uc?id=1FbNh8wxBDqzMNUvBsKN8Jw2muIYX93zW
+        gdown https://drive.google.com/uc?id=1AoOtkFPF5yQkZIUJDvebk5unekgS0ACf
         mkdir halide-install && cd halide-install
         tar -xf ../halide-rvv.tar.gz
 
@@ -36,8 +36,10 @@ jobs:
 
     - name: Generate code
       run: |
+        export LD_LIBRARY_PATH=${{ github.workspace }}/halide-install/lib:$LD_LIBRARY_PATH
         cd build
-        ./perf_algo
+        rm ${{ github.workspace }}/aot/*
+        ./perf_algo --gtest_filter=*halide*
         mv *.h *.s ${{ github.workspace }}/aot
 
     - name: Build for RISC-V
