@@ -68,6 +68,9 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
+      - name: CPU info
+        run: cat /proc/cpuinfo
+
       - name: Download binaries
         uses: actions/download-artifact@v4
         with:
