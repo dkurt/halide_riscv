@@ -58,7 +58,9 @@ TEST(bgr2gray_interleaved, halide) {
     randu(src, 0, 256);
 
     bgr2gray_interleaved_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    bgr2gray_ref(src.ptr<uint8_t>(), ref.ptr<uint8_t>(), src.rows, src.cols);
+    imwrite("src.png", src);
+    imwrite("res.png", dst);
+    // bgr2gray_ref(src.ptr<uint8_t>(), ref.ptr<uint8_t>(), src.rows, src.cols);
 
     ASSERT_LE(norm(ref, dst, NORM_INF), 0);
 }
