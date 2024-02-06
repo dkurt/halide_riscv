@@ -21,6 +21,14 @@ const int height = 1080;
 
 CV_TEST_MAIN("")
 
+TEST(julia, ref) {
+    Mat dst(height, width, CV_8UC1, Scalar(0));
+
+    julia_ref(dst.ptr<uint8_t>(), dst.rows, dst.cols);
+
+    imwrite("src.png", dst);
+}
+
 TEST(histogram, opencv) {
     Mat src(height, width, CV_8UC3), dst(3, 256, CV_32F), ref(3, 256, CV_32S);
     randu(src, 0, 256);
