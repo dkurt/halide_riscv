@@ -22,7 +22,10 @@ void bgr2gray_planar_halide(uint8_t* src, uint8_t* dst, int height, int width);
 void bgr2gray_opencv(const cv::Mat& src, cv::Mat& dst);
 
 void boxFilter_halide(uint16_t* src, uint16_t* dst, int height, int width);
+
 void boxFilter_opencv(const cv::Mat& src, cv::Mat& dst);
+void LaplacianFilter(cv::Mat src, cv::Mat dst, int height, int width);
+void standartDeviation(cv::Mat src, cv::Mat dst, int height, int width);
 
 #ifdef HAVE_OPENCV_DNN
 void convolution_nchw_halide(float* src, float* kernel, float* dst,
