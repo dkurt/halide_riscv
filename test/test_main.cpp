@@ -19,11 +19,13 @@ using namespace cv;
 const int width = 1920;
 const int height = 1080;
 
+static const int julia_width = 200;
+static const int julia_height = 200;
+
 CV_TEST_MAIN("")
 
-
 TEST(julia, ref) {
-    Mat dst(height, width, CV_8UC1, Scalar(0));
+    Mat dst(julia_height, julia_width, CV_8UC1, Scalar(0));
 
     julia_ref(dst.ptr<uint8_t>(), dst.rows, dst.cols);
 
@@ -31,9 +33,9 @@ TEST(julia, ref) {
 }
 
 TEST(julia, halide) {
-    Mat dst(width, height, CV_8UC1, Scalar(0));
+    Mat dst(julia_height, julia_width, CV_8UC1, Scalar(0));
 
-    halide_julia(dst.ptr<uint8_t>(), width, height);
+    halide_julia(dst.ptr<uint8_t>(), dst.rows, dst.cols);
 
     imwrite("julia_halide.png", dst);
 }

@@ -77,7 +77,7 @@ void halide_julia(uint8_t* dst, int height, int width) {
     julia(x, y, t) = Complex(x_ranged, y_ranged);
 
     // loop
-    RDom index(1, 100);
+    RDom index(1, step_bound);
     Complex current = julia(x, y, index - 1);
     julia(x, y, index) = current * current + c;
 
