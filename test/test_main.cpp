@@ -21,12 +21,21 @@ const int height = 1080;
 
 CV_TEST_MAIN("")
 
+
 TEST(julia, ref) {
     Mat dst(height, width, CV_8UC1, Scalar(0));
 
     julia_ref(dst.ptr<uint8_t>(), dst.rows, dst.cols);
 
-    imwrite("src.png", dst);
+    imwrite("julia_ref.png", dst);
+}
+
+TEST(julia, halide) {
+    Mat dst(width, height, CV_8UC1, Scalar(0));
+
+    halide_julia(dst.ptr<uint8_t>(), width, height);
+
+    imwrite("julia_halide.png", dst);
 }
 
 TEST(histogram, opencv) {
