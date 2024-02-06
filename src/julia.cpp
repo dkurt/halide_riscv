@@ -18,28 +18,94 @@ using namespace Halide;
 static const float ci = -0.75;
 static const float cr = 0.0;
 
+static const uint8_t step_bound = 255;
+static const uint8_t upper_bound = 4;
+
+// no Expr type in riscv build
+#ifndef __riscv
 // src :: Int -> fraction :: Float -> Float
 Expr halide_julia_norm(Expr src, Expr fraction) {
     return (((cast<float>(src)) * 4.0f) / fraction) - 2.0f;
 }
 
-struct Complex {
+struct HComplex {
     Expr real, imag;
 
-    Complex(Tuple t)
+    HComplex(Tuple t)
         : real(t[0]), imag(t[1]) {
     }
 
-    Complex(Expr r, Expr i)
+    HComplex(Expr r, Expr i)
         : real(r), imag(i) {
     }
 
-    Complex(FuncRef t)
-        : Complex(Tuple(t)) {
+    HComplex(FuncRef t)
+        : HComplex(Tuple(t)) {
     }
 
     operator Tuple() const {
         return {real, imag};
+    }
+
+    HComplex operator+(const HComplex &other) const {
+        return {real + other.real, imag + other.imag};
+    }
+
+    HComplex operator*(const HComplex &other) const {
+        return {real * other.real - imag * other.imag,
+                real * other.imag + imag * other.real};
+    }
+
+    Expr magnitude_squared() const {
+        return real * real + imag * imag;
+    }
+};
+#endif
+
+void halide_julia(uint8_t* dst, int height, int width) {
+    Buffer output(dst, {width, height});
+#ifdef __riscv
+   // add later
+#else
+    static Func julia("julia");
+
+    if (!julia.defined()) {
+        Var x, y;
+
+        HComplex c(cr, ci);
+
+        Expr x_ranged;
+        x_ranged = halide_julia_norm(x, height);
+
+        Expr y_ranged;
+        y_ranged = halide_julia_norm(y, width);
+
+        Func julia;
+        Var t;
+        julia(x, y, t) = HComplex(x_ranged, y_ranged);
+
+        // loop
+        RDom index(1, step_bound);
+        HComplex current = julia(x, y, index - 1);
+        julia(x, y, index) = current * current + c;
+
+        Expr esc_cond = HComplex(julia(x, y, index)).magnitude_squared() < upper_bound;
+        Tuple first_escape = argmin(esc_cond);
+
+        // proj to result
+        Func result;
+        result(x, y) = cast<uint8_t>(first_escape[0]);
+
+        result.realize(output);
+    }
+#endif
+}
+
+struct Complex {
+    float real, imag;
+
+    Complex(float fst, float snd)
+        : real(fst), imag(snd) {
     }
 
     Complex operator+(const Complex &other) const {
@@ -51,65 +117,23 @@ struct Complex {
                 real * other.imag + imag * other.real};
     }
 
-    Expr magnitude_squared() const {
+    float magnitude_squared() const {
         return real * real + imag * imag;
     }
 };
 
-void halide_julia(uint8_t* dst, int height, int width) {
-    static const uint8_t step_bound = 255;
-    static const uint8_t upper_bound = 4;
-
-    Buffer output(dst, width, height);
-
-    Var x, y;
-
-    Complex c(cr, ci);
-
-    Expr x_ranged;
-    x_ranged = halide_julia_norm(x, height);
-
-    Expr y_ranged;
-    y_ranged = halide_julia_norm(y, width);
-
-    Func julia;
-    Var t;
-    julia(x, y, t) = Complex(x_ranged, y_ranged);
-
-    // loop
-    RDom index(1, step_bound);
-    Complex current = julia(x, y, index - 1);
-    julia(x, y, index) = current * current + c;
-
-    Expr esc_cond = Complex(julia(x, y, index)).magnitude_squared() < upper_bound;
-    Tuple first_escape = argmin(esc_cond);
-
-    // proj to result
-    Func result;
-    result(x, y) = cast<uint8_t>(first_escape[0]);
-
-    result.realize(output);
-}
-
 float julia_norm(int src, float fraction) {
-    return ((((float)src) * 4.0) / fraction) - 2.0;
+    return ((((float)src) * 4.0f) / fraction) - 2.0f;
 }
 
 uint8_t julia_step(float x_src, float y_src) {
-    static const uint8_t count_bound = 255;
-    static const uint8_t upper_bound = 4;
-
-    float x = x_src;
-    float y = y_src;
+    static const Complex c(cr, ci);
+    Complex current(x_src, y_src);
 
     int count = 0;
 
-    for (;count < count_bound && x * x + y * y < upper_bound; count++) {
-        float new_x = x * x - y * y + cr;
-        float new_y = 2 * x * y + ci;
-
-        x = new_x;
-        y = new_y;
+    for (;count < step_bound && current.magnitude_squared() <= upper_bound; count++) {
+        current = current * current + c;
     }
 
     return count;
