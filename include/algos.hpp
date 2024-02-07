@@ -25,7 +25,7 @@ void boxFilter_halide(uint16_t* src, uint16_t* dst, int height, int width);
 void boxFilter_opencv(const cv::Mat& src, cv::Mat& dst);
 
 void ascii_art_ref(const uint8_t* src, uint8_t* dst, int height, int width);
-void ascii_art_halide(const uint8_t* src, uint8_t* dst, int input_height, int input_width);
+void ascii_art_halide(uint8_t* src, uint8_t* dst, int input_height, int input_width);
 #ifdef HAVE_OPENCV_DNN
 void convolution_nchw_halide(float* src, float* kernel, float* dst,
                              int inpChannels, int outChannels, int height, int width);
