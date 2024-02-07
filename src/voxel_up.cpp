@@ -27,9 +27,9 @@ using namespace voxel_upscale_const;
 void voxel_up( float* src, float* kernel, float* dst,
                     int inpChannels, int width, int height, int batch){
 
-    Halide::Buffer<float> input(src, {batch, inpChannels, width, height});
-    Halide::Buffer<float> weights(kernel, {inpChannels, ker_width, ker_height, ker_depth});
-    Halide::Buffer<float> output(dst, {batch * scale_depth, inpChannels, width * scale_width, height * scale_height });
+    Halide::Buffer<float> input(src, {width, height, inpChannels, batch});
+    Halide::Buffer<float> weights(kernel, { ker_width, ker_height, ker_depth, inpChannels});
+    Halide::Buffer<float> output(dst, { width * scale_width, height * scale_height, inpChannels, batch * scale_depth});
     
     
     static Halide::Func deconv("deconvolution");
@@ -43,27 +43,27 @@ void voxel_up( float* src, float* kernel, float* dst,
 
         Halide::RDom r1(0, width, 0, height, 0, batch);
    
-        dilated_input(n,c,x,y) = 0.0f; 
-        dilated_input(r1.z * scale_depth, c, r1.x * scale_width, r1.y * scale_height ) = 
-                    input(r1.z, c, r1.x, r1.y);
+        dilated_input(x,y,c,n) = 0.0f; 
+        dilated_input( r1.x * scale_width, r1.y * scale_height, c, r1.z * scale_depth) = 
+                    input( r1.x, r1.y, c, r1.z);
         dilated_input.compute_root();
         Halide::Func bounded =
             Halide::BoundaryConditions::constant_exterior(dilated_input, 0,
-                                                          0, (batch - 1) * scale_depth + 1,
-                                                          0, inpChannels,
                                                           0, (width - 1) * scale_width + 1,
-                                                          0, (height - 1) * scale_height + 1
+                                                          0, (height - 1) * scale_height + 1,
+                                                          0, inpChannels,
+                                                          0, (batch - 1) * scale_depth + 1
                                                           );
 
-        padded_input(n,c,x,y) = bounded(n,c,x,y);
+        padded_input(x,y,c,n) = bounded(x,y,c,n);
         
         Halide::RDom r(0, ker_width, 0, ker_height, 0, inpChannels, 0, ker_depth);
         Halide::Expr kx = x + pad_width - r.x;
         Halide::Expr ky = y + pad_height - r.y;
         Halide::Expr kc = r.z;
         Halide::Expr kn = n + pad_depth - r.w;
-        deconv(n, c, x, y) = Halide::sum(padded_input(kn, kc, kx, ky) *
-                                         weights(r.w, r.z, r.x, r.y));
+        deconv(x, y, c, n) = Halide::sum(padded_input(kx, ky, kc, kn) *
+                                         weights(r.x, r.y,  r.z, r.w));
         padded_input.compute_root();
        
         deconv.bound(x, 0, width * scale_width)
@@ -79,8 +79,9 @@ void voxel_up( float* src, float* kernel, float* dst,
 
 void upscale(std::vector<std::string> img_path, int width, int height)
 {
-  cv::Mat voxels({img_path.size(), 4, width, height}, CV_32F);
-  for(size_t i = 0; i < img_path.size(); ++i)
+  const int img_num = static_cast<int>(img_path.size());
+  cv::Mat voxels({img_num, 4, width, height}, CV_32F);
+  for(size_t i = 0; i < img_num; ++i)
   {
     cv::Mat img = cv::imread(img_path[i], cv::IMREAD_UNCHANGED);
     cv::Mat colors[4];
@@ -92,12 +93,12 @@ void upscale(std::vector<std::string> img_path, int width, int height)
     cv::split(img, colors);
   }
 
-  cv::Mat res({img_path.size() * scale_depth, 4, width * scale_width, height * scale_height },CV_32F);
+  cv::Mat res({img_num * scale_depth, 4, width * scale_width, height * scale_height },CV_32F);
 
   voxel_up(voxels.ptr<float>(), ker_weight, res.ptr<float>(),
-                  4, width, height, img_path.size());
+                  4, width, height, img_num);
 
-  for(size_t i = 0; i < img_path.size() * scale_depth; ++i)
+  for(size_t i = 0; i < img_num * scale_depth; ++i)
   {
     cv::Mat img;
     cv::Mat colors[4];
@@ -106,7 +107,7 @@ void upscale(std::vector<std::string> img_path, int width, int height)
       colors[j] = cv::Mat(std::vector<int>{width * scale_width, height * scale_height}, CV_32F, res.ptr<float>(i, j));
       //colors[j] = cv::Mat(std::vector<int>{width, height}, CV_32F, voxels.ptr<float>(i, j));
     }
-    cv::merge(colors, 4, img);
+    cv::merge(colors, 3, img);
     img.convertTo(img, CV_8U);
     std::string filename = "new_image" + std::to_string(i) + ".png";
     cv::imwrite(filename , img);
