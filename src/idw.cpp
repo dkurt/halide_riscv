@@ -6,7 +6,7 @@
 
 using namespace std;
 
-static const int pointCount = 100; 
+static const int pointCount = 100;
 
 void idw_ref(const uint8_t* src, uint8_t* dst, int height, int width, int* points, float* weights) {
     float* mask = new float[height * width]();
@@ -18,8 +18,8 @@ void idw_ref(const uint8_t* src, uint8_t* dst, int height, int width, int* point
         for (int x = 0; x < width; x++) {
             float dot = 0;
             for (int i = 0; i < pointCount; i++) {
-                int x0 = points[i];
-                int y0 = points[i + 1];
+                int x0 = points[3 * i + 1];
+                int y0 = points[3 * i];
                 int dx = x - x0;
                 int dy = y - y0;
 

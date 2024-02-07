@@ -92,6 +92,7 @@ target_include_directories(algos PRIVATE
 target_link_libraries(algos
   "${binary_dir}/install/lib/libopencv_core.so"
   "${binary_dir}/install/lib/libopencv_imgproc.so"
+  "${binary_dir}/install/lib/libopencv_imgcodecs.so"
 )
 
 
@@ -114,7 +115,6 @@ add_executable(test_algo ${PERF_SOURCES})
 target_link_libraries(test_algo
   algos
   "${binary_dir}/lib/libopencv_ts.a"
-  "${binary_dir}/lib/libopencv_imgcodecs.so"
   pthread
 )
 target_include_directories(test_algo PUBLIC
