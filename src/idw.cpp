@@ -30,12 +30,12 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
     idw(input, output);
 #else
     static Func f("idw");
-    
+
     // try {
     if (!f.defined()) {
         Var x("x"), y("y");
         RDom r(0, pointCount);
-        
+
         f(x, y) = 0.F;
         Expr x0 = points(3*r+1);
         Expr y0 = points(3*r);
@@ -45,7 +45,7 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
         f(x, y) += hypot(dx, dy) * weight;
 
         // f.vectorize(r, 8);
-        const int factor = 4; 
+        const int factor = 4;
         f.update().atomic().vectorize(r, factor);
 
         // Compile
@@ -79,57 +79,22 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
     f.realize(mask);
 #endif
 
-    //
-    float maxVal = 193.0 //-numeric_limits<float>::infinity();
-    float minVal = 58.0 //numeric_limits<float>::infinity();
-    // for (int y = 0; y < height; y++) {
-    //     for (int x = 0; x < width; x++) {
-    //         if (maskBuf[y*width + x] < minVal) {
-    //             minVal = maskBuf[y*width + x];
-    //         }
-    //         if (maskBuf[y*width + x] > maxVal) {
-    //             maxVal = maskBuf[y*width + x];
-    //         }
-    //     }
-    // }
-
+    float maxVal = 193.0;
+    float minVal = 58.0;
     float diff = maxVal - minVal;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             dst[y*width + x] = (uint8_t) (255 * (maskBuf[y*width + x] - minVal) / diff);
         }
     }
-    //
-
     delete[] maskBuf;
-// #ifdef __riscv
-//     idw(input, output);
-// #else
-//     static Func f("idw");
-//     if (!f.defined()) {
-//         Var x("x"), y("y");
-//         RDom r(0, pointCount);
-        
-//         f(x, y) = 0;
-//         Expr x0 = points(r.x, 0);
-//         Expr y0 = points(r.x, 1);
-//         Expr dx = x - x0;
-//         Expr dy = y - y0;
-//         f(x, y) += sqrt(dx*dx + dy*dy) * weights(r.x);
-//         f(x, y) = cast<uint8_t>(f(x, y));
-        
-//         // Dump AOT code
-//         f.compile_to_header("idw.h", {input}, "idw", target);
-//         f.compile_to_assembly("idw.s", {input}, "idw", target);
-//     }
-// #endif
 }
 
 void idw_ref(const uint8_t* src, uint8_t* dst, int height, int width, int* points, float* weights) {
     float* mask = new float[height * width]();
 
-    float maxVal = 193.0 //-numeric_limits<float>::infinity();
-    float minVal = 58.0 //numeric_limits<float>::infinity();
+    float maxVal = 193.0;
+    float minVal = 58.0;
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -144,12 +109,6 @@ void idw_ref(const uint8_t* src, uint8_t* dst, int height, int width, int* point
             }
 
             mask[y*width + x] = dot;
-            // if (dot < minVal) {
-            //     minVal = dot;
-            // }
-            // if (dot > maxVal) {
-            //     maxVal = dot;
-            // }
         }
     }
 
