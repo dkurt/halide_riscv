@@ -42,3 +42,4 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
 
 void voxel_up(float* src, float* kernel, float* dst,
                     int inpChannels, int height, int width, int depth);
+void upscale(const std::vector<std::string> img_path, int width, int height);

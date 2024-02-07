@@ -13,6 +13,7 @@
 #include <opencv2/ts.hpp>
 #include <exception>
 #include "algos.hpp"
+#include <ker_weight.hpp>
 
 //#define HAVE_OPENCV_DNN
 using namespace cv;
@@ -189,20 +190,32 @@ TEST(idw, halide) {
     imwrite("cres_halide.png", cl_dst_h);
 }
 
-TEST(deconvolution, halide)
+// TEST(deconvolution, halide)
+// {
+//     static const int ic = 4;
+//     static const int height = 100;
+//     static const int width = 100;
+//     static const int batch = 72;
+
+//     Mat src({width, height,ic, batch}, CV_32F);
+//     //Mat kernel({4, 4, 4, ic}, CV_32F);
+//     Mat dst({width*2, height*2,ic, batch*2}, CV_32F);
+//     randn(src, 0, 1);
+//     //randn(kernel, 0, 1);
+
+//     voxel_up(src.ptr<float>(), voxel_upscale_const::ker_weight, dst.ptr<float>(),
+//                             ic, width, height, batch);
+//     ASSERT_EQ(true,true);
+// }
+
+TEST(upscale, halide)
 {
-    static const int ic = 2;
-    static const int height = 32;
-    static const int width = 32;
-    static const int depth = 32;
 
-    Mat src({depth, height, width,ic}, CV_32F);
-    Mat kernel({depth, height, width, ic}, CV_32F);
-    Mat dst({depth*3, width*3, width*3, ic}, CV_32F);
-    randn(src, 0, 1);
-    randn(kernel, 0, 1);
+    static const int height = 100;
+    static const int width = 100;
+    std::vector<std::string> img_path{"image0001.png"};
 
-    voxel_up(src.ptr<float>(), kernel.ptr<float>(), dst.ptr<float>(),
-                            ic, height, width, depth);
+    upscale(img_path, width, height);
+
     ASSERT_EQ(true,true);
 }

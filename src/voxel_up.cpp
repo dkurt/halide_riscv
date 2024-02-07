@@ -1,6 +1,5 @@
 #include <opencv2/opencv.hpp>
-
-//#ifdef HAVE_OPENCV_DNN
+#include <ker_weight.hpp>
 
 #ifdef __riscv
   #include <HalideBuffer.h>
@@ -8,14 +7,11 @@
 #else
   #include <Halide.h>
 #endif
-
-
-void voxel_up(float* src, float* kernel, float* dst,
-                    int inpChannels, int height, int width, int depth){
-
-    static const int scale_depth = 3; 
-    static const int scale_height = 3;
-    static const int scale_width = 3;
+namespace voxel_upscale_const
+{
+    static const int scale_depth = 2; 
+    static const int scale_height = 2;
+    static const int scale_width = 2;
 
     static const int ker_depth = (2 * scale_depth - scale_depth % 2);
     static const int ker_height = (2 * scale_height - scale_height % 2);
@@ -24,56 +20,96 @@ void voxel_up(float* src, float* kernel, float* dst,
     static const int pad_depth = std::ceil(( scale_depth - 1) / 2);
     static const int pad_height = std::ceil(( scale_height - 1) / 2);
     static const int pad_width = std::ceil(( scale_width - 1) / 2);
+};
 
+using namespace voxel_upscale_const;
 
-    Halide::Buffer<float> input(src, {depth, height, width, inpChannels});
-    Halide::Buffer<float> weights(kernel, {ker_depth, ker_height, ker_width, inpChannels});
-    Halide::Buffer<float> output(dst, {depth*scale_depth, height*scale_height, width*scale_width, inpChannels});
+void voxel_up( float* src, float* kernel, float* dst,
+                    int inpChannels, int width, int height, int batch){
+
+    Halide::Buffer<float> input(src, {batch, inpChannels, width, height});
+    Halide::Buffer<float> weights(kernel, {inpChannels, ker_width, ker_height, ker_depth});
+    Halide::Buffer<float> output(dst, {batch * scale_depth, inpChannels, width * scale_width, height * scale_height });
     
     
     static Halide::Func deconv("deconvolution");
     if (!deconv.defined()) {
         input.set_name("input");
         weights.set_name("weights");
-        Halide::Var x("x"), y("y"), z("z"), c("c");
+        Halide::Var x("x"), y("y"), c("c"), n("n");
 
         Halide::Func padded_input("constant_exterior");
         Halide::Func dilated_input("dilated_input");
 
-        Halide::RDom r1(0, depth, 0, height, 0, width);
-        std::cout << "init"<<std::endl;
-        dilated_input(x,y,z,c) = 0.0f; 
-        dilated_input(r1.x * scale_depth, r1.y * scale_height, r1.z * scale_width, c) = 
-                    input(r1.x, r1.y, r1.z, c);
-
+        Halide::RDom r1(0, width, 0, height, 0, batch);
+   
+        dilated_input(n,c,x,y) = 0.0f; 
+        dilated_input(r1.z * scale_depth, c, r1.x * scale_width, r1.y * scale_height ) = 
+                    input(r1.z, c, r1.x, r1.y);
+        dilated_input.compute_root();
         Halide::Func bounded =
             Halide::BoundaryConditions::constant_exterior(dilated_input, 0,
-                                                          0, (depth - 1) * scale_depth + 1,
-                                                          0, (height - 1) * scale_height + 1,
+                                                          0, (batch - 1) * scale_depth + 1,
+                                                          0, inpChannels,
                                                           0, (width - 1) * scale_width + 1,
-                                                          0, inpChannels);
-        std::cout << "bound"<<std::endl;
-        padded_input(x,y,z,c) = bounded(x,y,z,c);
+                                                          0, (height - 1) * scale_height + 1
+                                                          );
+
+        padded_input(n,c,x,y) = bounded(n,c,x,y);
         
-        Halide::RDom r(0, ker_depth, 0, ker_height, 0, ker_width, 0, inpChannels);
-        Halide::Expr kx = x + pad_depth - r.x;
+        Halide::RDom r(0, ker_width, 0, ker_height, 0, inpChannels, 0, ker_depth);
+        Halide::Expr kx = x + pad_width - r.x;
         Halide::Expr ky = y + pad_height - r.y;
-        Halide::Expr kz = z + pad_width - r.z;
-        Halide::Expr kc = r.w;
-        deconv(x, y, z, c) = Halide::sum(padded_input(kx, ky, kz,kc) *
-                                         weights(r.x, r.y, r.z, c));
-        std::cout << "sum"<<std::endl;
-        deconv.bound(x, 0, depth * scale_depth)
+        Halide::Expr kc = r.z;
+        Halide::Expr kn = n + pad_depth - r.w;
+        deconv(n, c, x, y) = Halide::sum(padded_input(kn, kc, kx, ky) *
+                                         weights(r.w, r.z, r.x, r.y));
+        padded_input.compute_root();
+       
+        deconv.bound(x, 0, width * scale_width)
               .bound(y, 0, height * scale_height)
-              .bound(z, 0, width * scale_width)
-              .bound(c, 0, inpChannels); 
+              .bound(c, 0, inpChannels)
+              .bound(n, 0, batch * scale_depth); 
 
-        std::cout << "end sum"<<std::endl;
-
-        //output = deconv.realize({depth*scale_depth, height*scale_height, width*scale_width, inpChannels});//(dst, {depth*scale_depth, height*scale_height, width*scale_width, inpChannels});
+      
         deconv.realize(output); 
-        std::cout << "realize"<<std::endl;
+        
     }
 }
 
-//#endif
+void upscale(std::vector<std::string> img_path, int width, int height)
+{
+  cv::Mat voxels({img_path.size(), 4, width, height}, CV_32F);
+  for(size_t i = 0; i < img_path.size(); ++i)
+  {
+    cv::Mat img = cv::imread(img_path[i], cv::IMREAD_UNCHANGED);
+    cv::Mat colors[4];
+    for (size_t j = 0; j < 4; ++j) 
+    {
+        colors[j] = cv::Mat(std::vector<int>{width, height}, CV_32F, voxels.ptr<float>(i, j));
+    }
+    img.convertTo(img, CV_32F);
+    cv::split(img, colors);
+  }
+
+  cv::Mat res({img_path.size() * scale_depth, 4, width * scale_width, height * scale_height },CV_32F);
+
+  voxel_up(voxels.ptr<float>(), ker_weight, res.ptr<float>(),
+                  4, width, height, img_path.size());
+
+  for(size_t i = 0; i < img_path.size() * scale_depth; ++i)
+  {
+    cv::Mat img;
+    cv::Mat colors[4];
+    for(size_t j = 0; j < 4; ++j)
+    {
+      colors[j] = cv::Mat(std::vector<int>{width * scale_width, height * scale_height}, CV_32F, res.ptr<float>(i, j));
+      //colors[j] = cv::Mat(std::vector<int>{width, height}, CV_32F, voxels.ptr<float>(i, j));
+    }
+    cv::merge(colors, 4, img);
+    img.convertTo(img, CV_8U);
+    std::string filename = "new_image" + std::to_string(i) + ".png";
+    cv::imwrite(filename , img);
+  }
+
+}
