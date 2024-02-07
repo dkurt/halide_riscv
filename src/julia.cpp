@@ -67,6 +67,7 @@ void halide_julia(uint8_t* dst, int height, int width) {
     halide_julia_rv(output);
 #else
     static Func julia("julia");
+    static const int vector_factor = 16;
 
     if (!julia.defined()) {
         Var x, y;
@@ -95,17 +96,20 @@ void halide_julia(uint8_t* dst, int height, int width) {
         result(x, y) = cast<uint8_t>(first_escape[0]);
 
         julia.compute_at(result, y);
+        julia.vectorize(x, vector_factor);
 
-        // result.realize(output);
         Target target;
         target.os = Target::OS::Linux;
         target.arch = Target::Arch::RISCV;
         target.bits = 64;
+        target.vector_bits = vector_factor * sizeof(uint8_t) * 8;
+
+        CV_Assert(target.vector_bits <= 128);
 
         Halide::compile_standalone_runtime("halide_runtime.o", target);
 
         std::vector<Target::Feature> features;
-        // features.push_back(Target::RVV); TODO
+        features.push_back(Target::RVV);
         features.push_back(Target::NoAsserts);
         features.push_back(Target::NoRuntime);
         target.set_features(features);
