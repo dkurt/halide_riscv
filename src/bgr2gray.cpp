@@ -60,30 +60,29 @@ void bgr2gray_interleaved_halide(uint8_t* src, uint8_t* dst, int height, int wid
 
         int factor = 16;
         f.vectorize(x, factor);
-        f.realize(output);
 
-    //     // Compile
-    //     Target target;
-    //     target.os = Target::OS::Linux;
-    //     target.arch = Target::Arch::RISCV;
-    //     target.bits = 64;
-    //     target.vector_bits = factor * sizeof(uint8_t) * 8;
+        // Compile
+        Target target;
+        target.os = Target::OS::Linux;
+        target.arch = Target::Arch::RISCV;
+        target.bits = 64;
+        target.vector_bits = factor * sizeof(uint8_t) * 8;
 
-    //     // Tested XuanTie C906 has 128-bit vector unit
-    //     CV_Assert(target.vector_bits <= 128);
+        // Tested XuanTie C906 has 128-bit vector unit
+        CV_Assert(target.vector_bits <= 128);
 
-    //     std::vector<Target::Feature> features;
-    //     features.push_back(Target::RVV);
-    //     features.push_back(Target::NoAsserts);
-    //     features.push_back(Target::NoRuntime);
-    //     target.set_features(features);
+        std::vector<Target::Feature> features;
+        features.push_back(Target::RVV);
+        features.push_back(Target::NoAsserts);
+        features.push_back(Target::NoRuntime);
+        target.set_features(features);
 
-    //     std::cout << target << std::endl;
-    //     f.print_loop_nest();
+        std::cout << target << std::endl;
+        f.print_loop_nest();
 
-    //     // Dump AOT code
-    //     f.compile_to_header("bgr2gray_interleaved.h", {input}, "bgr2gray_interleaved", target);
-    //     f.compile_to_assembly("bgr2gray_interleaved.s", {input}, "bgr2gray_interleaved", target);
+        // Dump AOT code
+        f.compile_to_header("bgr2gray_interleaved.h", {input}, "bgr2gray_interleaved", target);
+        f.compile_to_assembly("bgr2gray_interleaved.s", {input}, "bgr2gray_interleaved", target);
     }
 #endif
 }

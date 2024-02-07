@@ -8,26 +8,22 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License
+// limitations under the License.
 
 #include <opencv2/ts.hpp>
-#include <string>
+
 #include "algos.hpp"
 
 using namespace cv;
 
 const int width = 1920;
 const int height = 1080;
-static const int rx = 15;
-static const int ry = 19;
-const std::string grey_scale = "$@B%8&WM#*OAHKDPQWMRZO0QLCJUYXVJFT/|()1{}[]?-_+~<>i!lI;:,^`'.  ";
 
 static const int julia_width = 200;
 static const int julia_height = 200;
 
 CV_TEST_MAIN("")
 
-<<<<<<< HEAD
 TEST(julia, ref) {
     Mat dst(julia_height, julia_width, CV_8UC1, Scalar(0));
 
@@ -42,145 +38,8 @@ TEST(julia, halide) {
     halide_julia(dst.ptr<uint8_t>(), dst.rows, dst.cols);
 
     imwrite("julia_halide.png", dst);
-=======
-TEST(ascii_art_ref, opencv){
-    for(int i = 0; i < grey_scale.size(); ++i){
-        cv::Mat m(20, 15, CV_8U, cv::Scalar(255, 255, 255));
-        std::string s(1,grey_scale[i] );
-        cv::putText(m, s, cv::Point(1, 15),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
-        std::string filename = s + ".png";
-        cv::imwrite(filename, m);       
-    }
-
-    ASSERT_EQ(true, true);
 }
 
-TEST(test_ascii_cat_ref, opencv){
-    cv::Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    cv::Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
-    render(src.rows, src.cols, CV_8U, cv::Scalar(255));
-
-    ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    char *s;
-    s = (char*)dst.ptr<uint8_t>();
-    std::vector<std::pair<float, char>> lums={};
-    std::vector<char> symbols(256);
-    float lum_min = 255;
-    float lum_max = 0;
-    for(int i = 0; i < grey_scale.size(); i++){
-        cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
-        cv::putText(tmp, std::string(1, grey_scale[i]), cv::Point(1, ry-1), 
-            cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-
-        float lum = 0;
-        uint8_t *stmp;
-        stmp = tmp.ptr<uint8_t>();
-        for(int y = 0; y < tmp.rows; y++){
-            for(int x = 0; x < tmp.cols; x++){
-                lum += stmp[y*rx+x];
-            }
-        }
-        std::pair<float, char> a(lum/(rx*ry), grey_scale[i]);
-        lums.push_back(a);
-       
-    }
-    std::sort(lums.begin(), lums.end());
-
-
-    for(int i = 0; i < dst.rows; i++)
-        for(int j = 0; j < dst.cols; j++){
-            uint8_t lum = dst.at<uint8_t>(i, j);
-            int index = (static_cast<float>(lum)/255)*(lums.size()-1);
-            cv::Mat roi =  render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry);
-            cv::putText(roi, std::string(1, grey_scale[index]), cv::Point(1, ry-1), 
-                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-
-        }
-    
-    cv::imwrite("res_cat_ascii_ref.png", render);
-    cv::imwrite("src_cat_ascii_ref.png", src);
-    ASSERT_EQ(true, true);
-}
-
-
-
-TEST(test_ascii_cat_halide, opencv){
-    cv::Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    cv::Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
-    render(src.rows, src.cols, CV_8U, cv::Scalar(255));
-
-    ascii_art_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    char *s;
-    s = (char*)dst.ptr<uint8_t>();
-    std::vector<std::pair<float, char>> lums={};
-    std::vector<char> symbols(256);
-    float lum_min = 255;
-    float lum_max = 0;
-    for(int i = 0; i < grey_scale.size(); i++){
-        cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
-        cv::putText(tmp, std::string(1, grey_scale[i]), cv::Point(1, ry-1), 
-            cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-
-        float lum = 0;
-        uint8_t *stmp;
-        stmp = tmp.ptr<uint8_t>();
-        for(int y = 0; y < tmp.rows; y++){
-            for(int x = 0; x < tmp.cols; x++){
-                lum += stmp[y*rx+x];
-            }
-        }
-        std::pair<float, char> a(lum/(rx*ry), grey_scale[i]);
-        lums.push_back(a);
-       
-    }
-    std::sort(lums.begin(), lums.end());
-
-    for(int i = 0; i < dst.rows; i++)
-        for(int j = 0; j < dst.cols; j++){
-            
-            uint8_t lum = dst.at<uint8_t>(i, j);
-            int index = (static_cast<float>(lum)/255)*(lums.size()-1);
-            cv::Mat roi =  render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry);
-            cv::putText(roi, std::string(1, grey_scale[index]), cv::Point(1, ry-1), 
-                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);         
-        }
-    
-    imwrite("res_cat_ascii_halide.png", render);
-    imwrite("src_cat_ascii_halide.png", src);
-    ASSERT_EQ(true, true);
->>>>>>> 3f62d2b (Update test_main.cpp)
-}
-/*
-TEST(test_halide, opencv){
-    Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
-    render(src.rows, src.cols, CV_8U);
-
-    ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    char *s;
-    s = (char*)dst.ptr<uint8_t>();
-
-    imwrite("src_ascii.png", src);
-    for(int i = 0; i < dst.rows; i++)
-        for(int j = 0; j < dst.cols; j++){
-
-            //cv::putText(render,s, cv::Point(1, i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
-            uint8_t lum = dst.at<uint8_t>(i, j);
-            render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry).setTo(255-lum);
-            
-        }
-    // for(int i = 0; i < sizeof(s)/sizeof(char); i++){
-    //     cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
-    //     cv::putText(tmp, std::string(1, s[i]), cv::Point(1, ry-1), 
-    //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-
-    //     tmp.copyTo(render(cv::Rect((i%render.cols)*rx,( i%render.rows)*ry, rx, ry)));
-    // }
-    imwrite("res_ascii.png", render);
-    //imwrite("res_ascii.png", dst);
-    ASSERT_EQ(true, true);
-}*/
-/*
 TEST(histogram, opencv) {
     Mat src(height, width, CV_8UC3), dst(3, 256, CV_32F), ref(3, 256, CV_32S);
     randu(src, 0, 256);
@@ -218,8 +77,6 @@ TEST(bgr2gray_interleaved, halide) {
     randu(src, 0, 256);
 
     bgr2gray_interleaved_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    cv::imwrite("src.png", src);
-    cv::imwrite("res.png", dst);
     bgr2gray_ref(src.ptr<uint8_t>(), ref.ptr<uint8_t>(), src.rows, src.cols);
 
     ASSERT_LE(norm(ref, dst, NORM_INF), 0);
@@ -304,8 +161,6 @@ TEST(convolution_nhwc, halide) {
     ASSERT_LE(norm(ref.reshape(1, 1), dst.reshape(1, 1), NORM_INF), 4e-5f);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 #endif  // HAVE_OPENCV_DNN
 
 
@@ -328,28 +183,6 @@ TEST(idw, halide) {
     // imwrite("src.png", src);
     imwrite("res.png", dst);
     imwrite("cres.png", cl_dst);
-<<<<<<< HEAD
     imwrite("res_halide.png", dst_h);
     imwrite("cres_halide.png", cl_dst_h);
 }
-=======
-}
-=======
-#endif  
-<<<<<<< HEAD
-
-
-
->>>>>>> afa1f38 (Update test_main.cpp)
-<<<<<<< HEAD
->>>>>>> 2c31aa5 (Update test_main.cpp)
-=======
-=======
->>>>>>> 1d44709 (Update test_main.cpp)
-<<<<<<< HEAD
->>>>>>> 34be91d (Update test_main.cpp)
-=======
-=======
-#endif  */
->>>>>>> 3088d16 (Update test_main.cpp)
->>>>>>> e2f05c8 (Update test_main.cpp)
