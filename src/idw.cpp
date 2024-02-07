@@ -9,7 +9,7 @@ using namespace std;
 
 #ifdef __riscv
   #include <HalideBuffer.h>
-  #include "histogram.h"
+  #include "idw.h"
   using namespace Halide::Runtime;
 #else
   #include <Halide.h>
@@ -27,7 +27,7 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
     Buffer<int> points(pointsBuf, {pointCount*3});
     Buffer<float> weights(weightsBuf, {pointCount});
 #ifdef __riscv
-    idw(input, output);
+    idw(mask);
 #else
     static Func f("idw");
 
