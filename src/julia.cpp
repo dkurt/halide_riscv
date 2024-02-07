@@ -65,7 +65,7 @@ struct HComplex {
 void halide_julia(uint8_t* dst, int height, int width) {
     Buffer output(dst, {width, height});
 #ifdef __riscv
-   // add later
+    halide_julia_rv(output);
 #else
     static Func julia("julia");
 
@@ -80,7 +80,6 @@ void halide_julia(uint8_t* dst, int height, int width) {
         Expr y_ranged;
         y_ranged = halide_julia_norm(y, width);
 
-        Func julia;
         Var t;
         julia(x, y, t) = HComplex(x_ranged, y_ranged);
 
@@ -96,7 +95,25 @@ void halide_julia(uint8_t* dst, int height, int width) {
         Func result;
         result(x, y) = cast<uint8_t>(first_escape[0]);
 
-        result.realize(output);
+        julia.compute_root();
+
+        // result.realize(output);
+        Target target;
+        target.os = Target::OS::Linux;
+        target.arch = Target::Arch::RISCV;
+        target.bits = 64;
+
+        std::vector<Target::Feature> features;
+        // features.push_back(Target::RVV); TODO
+        features.push_back(Target::NoAsserts);
+        features.push_back(Target::NoRuntime);
+        target.set_features(features);
+
+        std::cout << target << std::endl;
+        result.print_loop_nest();
+
+        result.compile_to_header("halide_julia_rv.h", {}, "halide_julia_rv", target);
+        result.compile_to_assembly("halide_julia_rv.s", {}, "halide_julia_rv", target);
     }
 #endif
 }
