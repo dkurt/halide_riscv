@@ -36,23 +36,67 @@ TEST(ascii_art_ref, opencv){
 
     ASSERT_EQ(true, true);
 }
+
 TEST(test, opencv){
     Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    Mat dst(src.rows/ry, src.cols/rx, CV_8U), ref(height, width, CV_8U);
+    Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
+    render(src.rows, src.cols, CV_8U);
 
     ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
     char *s;
     s = (char*)dst.ptr<uint8_t>();
-    std::cout<<s;
 
     imwrite("src_ascii.png", src);
-    //for(int i = 0; i < dst.rows; i++)
-     //   for(int j = 0; j < dst.cols; j++)
-       // cv::putText(dst, s, cv::Point(15, 19*i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
-    imwrite("res_ascii.png", dst);
+    for(int i = 0; i < dst.rows; i++)
+        for(int j = 0; j < dst.cols; j++){
+
+            //cv::putText(render,s, cv::Point(1, i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
+            uint8_t lum = dst.at<uint8_t>(i, j);
+            render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry).setTo(lum);
+            
+        }
+    // for(int i = 0; i < sizeof(s)/sizeof(char); i++){
+    //     cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
+    //     cv::putText(tmp, std::string(1, s[i]), cv::Point(1, ry-1), 
+    //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
+
+    //     tmp.copyTo(render(cv::Rect((i%render.cols)*rx,( i%render.rows)*ry, rx, ry)));
+    // }
+    imwrite("res_ascii.png", render);
+    //imwrite("res_ascii.png", dst);
     ASSERT_EQ(true, true);
 }
+/*
+TEST(test_halide, opencv){
+    Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
+    Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
+    render(src.rows, src.cols, CV_8U);
 
+    ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
+    char *s;
+    s = (char*)dst.ptr<uint8_t>();
+
+    imwrite("src_ascii.png", src);
+    for(int i = 0; i < dst.rows; i++)
+        for(int j = 0; j < dst.cols; j++){
+
+            //cv::putText(render,s, cv::Point(1, i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
+            uint8_t lum = dst.at<uint8_t>(i, j);
+            render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry).setTo(255-lum);
+            
+        }
+    // for(int i = 0; i < sizeof(s)/sizeof(char); i++){
+    //     cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
+    //     cv::putText(tmp, std::string(1, s[i]), cv::Point(1, ry-1), 
+    //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
+
+    //     tmp.copyTo(render(cv::Rect((i%render.cols)*rx,( i%render.rows)*ry, rx, ry)));
+    // }
+    imwrite("res_ascii.png", render);
+    //imwrite("res_ascii.png", dst);
+    ASSERT_EQ(true, true);
+}*/
+/*
 TEST(histogram, opencv) {
     Mat src(height, width, CV_8UC3), dst(3, 256, CV_32F), ref(3, 256, CV_32S);
     randu(src, 0, 256);
@@ -176,4 +220,4 @@ TEST(convolution_nhwc, halide) {
     ASSERT_LE(norm(ref.reshape(1, 1), dst.reshape(1, 1), NORM_INF), 4e-5f);
 }
 
-#endif  
+#endif  */
