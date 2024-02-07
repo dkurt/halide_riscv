@@ -22,7 +22,7 @@ const int height = 1080;
 CV_TEST_MAIN("")
 
 TEST(ascii_art_ref, opencv){
-    std::string grey_scale = "$@B%8&WM#*OAHKDPQWMRZO0QLCJUYXVJFT/|()1{}[]?-_+~<>i!lI;:,\"^`'.  ";
+    std::string grey_scale = "$@B%8&WM#*OAHKDPQWMRZO0QLCJUYXVJFT/|()1{}[]?-_+~<>i!lI;:,^`'.  ";
     for(int i = 0; i < grey_scale.size(); ++i){
         cv::Mat m(20, 15, CV_8U, cv::Scalar(255, 255, 255));
         std::string s(1,grey_scale[i] );
@@ -38,16 +38,13 @@ TEST(test, opencv){
     Mat src(height, width, CV_8UC1), dst(height, width, CV_8U), ref(height, width, CV_8U);
     randu(src, 0, 256);
     ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    std::string s = "";
-    for(size_t j=0; j<dst.cols; j++){
-        for(size_t i = 0; i < dst.rows; i++){
-            s+=std::to_string(dst.at<uint8_t>(j,i));
-        }
-    }
+    char *s;
+    s = (char*)dst.ptr<uint8_t>();
     std::cout<<s;
 
     imwrite("src_ascii.png", src);
-    cv::putText(dst, s, cv::Point(100, 20),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
+    for(int i = 0; i < dst.rows; i++)
+        cv::putText(dst, s, cv::Point(15, 19*i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
     imwrite("res_ascii.png", dst);
     ASSERT_EQ(true, true);
 }
@@ -89,9 +86,9 @@ TEST(bgr2gray_interleaved, halide) {
     randu(src, 0, 256);
 
     bgr2gray_interleaved_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    imwrite("src.png", src);
-    imwrite("res.png", dst);
-    // bgr2gray_ref(src.ptr<uint8_t>(), ref.ptr<uint8_t>(), src.rows, src.cols);
+    cv::imwrite("src.png", src);
+    cv::imwrite("res.png", dst);
+    bgr2gray_ref(src.ptr<uint8_t>(), ref.ptr<uint8_t>(), src.rows, src.cols);
 
     ASSERT_LE(norm(ref, dst, NORM_INF), 0);
 }
@@ -175,4 +172,7 @@ TEST(convolution_nhwc, halide) {
     ASSERT_LE(norm(ref.reshape(1, 1), dst.reshape(1, 1), NORM_INF), 4e-5f);
 }
 
-#endif  // HAVE_OPENCV_DNN
+#endif  
+
+
+
