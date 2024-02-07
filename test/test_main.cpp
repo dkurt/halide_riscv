@@ -18,6 +18,8 @@ using namespace cv;
 
 const int width = 1920;
 const int height = 1080;
+static const int rx = 5;
+static const int ry = 9;
 
 static const int julia_width = 200;
 static const int julia_height = 200;
@@ -54,16 +56,18 @@ TEST(ascii_art_ref, opencv){
     ASSERT_EQ(true, true);
 }
 TEST(test, opencv){
-    Mat src(height, width, CV_8UC1), dst(height, width, CV_8U), ref(height, width, CV_8U);
-    randu(src, 0, 256);
+    Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
+    Mat dst(src.rows/ry, src.cols/rx, CV_8U), ref(height, width, CV_8U);
+
     ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
     char *s;
     s = (char*)dst.ptr<uint8_t>();
     std::cout<<s;
 
     imwrite("src_ascii.png", src);
-    for(int i = 0; i < dst.rows; i++)
-        cv::putText(dst, s, cv::Point(15, 19*i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+    //for(int i = 0; i < dst.rows; i++)
+     //   for(int j = 0; j < dst.cols; j++)
+       // cv::putText(dst, s, cv::Point(15, 19*i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
     imwrite("res_ascii.png", dst);
     ASSERT_EQ(true, true);
 >>>>>>> 3f62d2b (Update test_main.cpp)
@@ -223,8 +227,14 @@ TEST(idw, halide) {
 }
 =======
 #endif  
+<<<<<<< HEAD
 
 
 
 >>>>>>> afa1f38 (Update test_main.cpp)
+<<<<<<< HEAD
 >>>>>>> 2c31aa5 (Update test_main.cpp)
+=======
+=======
+>>>>>>> 1d44709 (Update test_main.cpp)
+>>>>>>> 34be91d (Update test_main.cpp)
