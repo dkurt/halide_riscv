@@ -2,8 +2,7 @@
 
 #ifdef __riscv
 #include <HalideBuffer.h>
-#include "bgr2gray_interleaved.h"
-#include "bgr2gray_planar.h"
+#include "halide_julia_rv.h"
 
 using namespace Halide::Runtime;
 
