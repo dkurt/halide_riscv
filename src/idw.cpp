@@ -80,18 +80,18 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
 #endif
 
     //
-    float maxVal = -numeric_limits<float>::infinity();
-    float minVal = numeric_limits<float>::infinity();
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            if (maskBuf[y*width + x] < minVal) {
-                minVal = maskBuf[y*width + x];
-            }
-            if (maskBuf[y*width + x] > maxVal) {
-                maxVal = maskBuf[y*width + x];
-            }
-        }
-    }
+    float maxVal = 193.0 //-numeric_limits<float>::infinity();
+    float minVal = 58.0 //numeric_limits<float>::infinity();
+    // for (int y = 0; y < height; y++) {
+    //     for (int x = 0; x < width; x++) {
+    //         if (maskBuf[y*width + x] < minVal) {
+    //             minVal = maskBuf[y*width + x];
+    //         }
+    //         if (maskBuf[y*width + x] > maxVal) {
+    //             maxVal = maskBuf[y*width + x];
+    //         }
+    //     }
+    // }
 
     float diff = maxVal - minVal;
     for (int y = 0; y < height; y++) {
@@ -128,8 +128,8 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
 void idw_ref(const uint8_t* src, uint8_t* dst, int height, int width, int* points, float* weights) {
     float* mask = new float[height * width]();
 
-    float maxVal = -numeric_limits<float>::infinity();
-    float minVal = numeric_limits<float>::infinity();
+    float maxVal = 193.0 //-numeric_limits<float>::infinity();
+    float minVal = 58.0 //numeric_limits<float>::infinity();
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -144,12 +144,12 @@ void idw_ref(const uint8_t* src, uint8_t* dst, int height, int width, int* point
             }
 
             mask[y*width + x] = dot;
-            if (dot < minVal) {
-                minVal = dot;
-            }
-            if (dot > maxVal) {
-                maxVal = dot;
-            }
+            // if (dot < minVal) {
+            //     minVal = dot;
+            // }
+            // if (dot > maxVal) {
+            //     maxVal = dot;
+            // }
         }
     }
 

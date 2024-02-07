@@ -4,6 +4,7 @@
         "limits": "cpp",
         "iostream": "cpp",
         "cmath": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "new": "cpp"
     }
 }
