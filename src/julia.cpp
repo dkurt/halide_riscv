@@ -96,13 +96,13 @@ void halide_julia(uint8_t* dst, int height, int width) {
         result(x, y) = cast<uint8_t>(first_escape[0]);
 
         julia.compute_at(result, y);
-        julia.vectorize(x, vector_factor);
+        julia.update(0).vectorize(x, 4);
 
         Target target;
         target.os = Target::OS::Linux;
         target.arch = Target::Arch::RISCV;
         target.bits = 64;
-        target.vector_bits = vector_factor * sizeof(uint8_t) * 8;
+        target.vector_bits = 128;
 
         CV_Assert(target.vector_bits <= 128);
 
