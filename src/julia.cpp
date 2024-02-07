@@ -94,13 +94,15 @@ void halide_julia(uint8_t* dst, int height, int width) {
         Func result;
         result(x, y) = cast<uint8_t>(first_escape[0]);
 
-        julia.compute_root();
+        julia.compute_at(result, y);
 
         // result.realize(output);
         Target target;
         target.os = Target::OS::Linux;
         target.arch = Target::Arch::RISCV;
         target.bits = 64;
+
+        Halide::compile_standalone_runtime("halide_runtime.o", target);
 
         std::vector<Target::Feature> features;
         // features.push_back(Target::RVV); TODO
