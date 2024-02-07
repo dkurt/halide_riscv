@@ -11,11 +11,9 @@
 // limitations under the License.
 
 #include <opencv2/ts.hpp>
-#include <exception>
-#include "algos.hpp"
-#include <ker_weight.hpp>
 
-//#define HAVE_OPENCV_DNN
+#include "algos.hpp"
+
 using namespace cv;
 
 const int width = 1920;
@@ -162,13 +160,12 @@ TEST(convolution_nhwc, halide) {
 
     ASSERT_LE(norm(ref.reshape(1, 1), dst.reshape(1, 1), NORM_INF), 4e-5f);
 }
-#endif
 
 #endif  // HAVE_OPENCV_DNN
 
 
 TEST(idw, halide) {
-    Mat src(height, width, CV_8U);
+    Mat src(height, width, CV_8U); 
     Mat dst(height, width, CV_8U), cl_dst(height, width, CV_8UC3), dst_h(height, width, CV_8U), cl_dst_h(height, width, CV_8UC3);
     // randu(src, 0, 256);
 
@@ -188,38 +185,4 @@ TEST(idw, halide) {
     imwrite("cres.png", cl_dst);
     imwrite("res_halide.png", dst_h);
     imwrite("cres_halide.png", cl_dst_h);
-}
-
-// TEST(deconvolution, halide)
-// {
-//     static const int ic = 4;
-//     static const int height = 100;
-//     static const int width = 100;
-//     static const int batch = 72;
-
-//     Mat src({width, height,ic, batch}, CV_32F);
-//     //Mat kernel({4, 4, 4, ic}, CV_32F);
-//     Mat dst({width*2, height*2,ic, batch*2}, CV_32F);
-//     randn(src, 0, 1);
-//     //randn(kernel, 0, 1);
-
-//     voxel_up(src.ptr<float>(), voxel_upscale_const::ker_weight, dst.ptr<float>(),
-//                             ic, width, height, batch);
-//     ASSERT_EQ(true,true);
-// }
-
-TEST(upscale, halide)
-{
-
-    static const int height = 100;
-    static const int width = 100;
-    std::vector<std::string> img_path(72);
-    for (int i = 1; i <= 72; ++i)
-    {
-        img_path[i - 1] = cv::format("./image%04d.png", i);
-    }
-
-    upscale(img_path, width, height);
-
-    ASSERT_EQ(true,true);
 }
