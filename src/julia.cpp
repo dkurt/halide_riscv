@@ -102,6 +102,8 @@ void halide_julia(uint8_t* dst, int height, int width) {
         target.arch = Target::Arch::RISCV;
         target.bits = 64;
 
+        Halide::compile_standalone_runtime("halide_runtime.o", target);
+
         std::vector<Target::Feature> features;
         // features.push_back(Target::RVV); TODO
         features.push_back(Target::NoAsserts);
