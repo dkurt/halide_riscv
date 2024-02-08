@@ -36,7 +36,7 @@ void ascii_art_halide(uint8_t* src, uint8_t* dst, int input_height, int input_wi
     if (!ascii.defined()) {
         // Func padded = BoundaryConditions::constant_exterior(input, 0);
 
-        Var x("x"), y("y"), yo("yo), yi("yi");
+        Var x("x"), y("y"), yo("yo"), yi("yi");
         RDom r(0, rx, 0, ry);
         Expr s = sum(cast<uint32_t>(input(x*rx + r.x, y*ry + r.y)));
     
