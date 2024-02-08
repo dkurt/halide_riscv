@@ -82,12 +82,12 @@ jobs:
         with:
           name: halide_riscv
 
-    - name: Download test data
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install gdown
-        gdown https://drive.google.com/uc?id=1tCgUEbdlLLad-ThZ5PO9gJyy9X5DCaUT
-        tar -xf test_data.tar.gz
+      - name: Download test data
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install gdown
+          gdown https://drive.google.com/uc?id=1tCgUEbdlLLad-ThZ5PO9gJyy9X5DCaUT
+          tar -xf test_data.tar.gz
 
       - name: Run tests
         run: |
