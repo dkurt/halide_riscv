@@ -28,10 +28,10 @@ PERF_TEST(ascii_art, halide) {
     const int height = 1080;
     const std::string grey_scale = "$@B%8&WM#*OAHKDPQWMRZO0QLCJUYXVJFT/|()1{}[]?-_+~<>i!lI;:,^`'.  ";
 
-    Mat src(height, width, CV_8UC1), dst(height/ry, width/rx, CV_8U);
+    Mat src(height, width, CV_8UC1), dst(height/ry, width/rx, CV_32F);
     randu(src, 0, 256);
     PERF_SAMPLE_BEGIN()
-        ascii_art_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
+        ascii_art_halide(src.ptr<uint8_t>(), dst.ptr<float>(), src.rows, src.cols);
     PERF_SAMPLE_END()
 
     SANITY_CHECK_NOTHING();

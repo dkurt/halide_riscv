@@ -10,12 +10,10 @@ TEST(ascii_art, halide){
     const std::string grey_scale = "$@B%8&WM#*OAHKDPQWMRZO0QLCJUYXVJFT/|()1{}[]?-_+~<>i!lI;:,^`'.  ";
 
     cv::Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    cv::Mat dst(src.rows/ry, src.cols/rx, CV_8U),
+    cv::Mat dst(src.rows/ry, src.cols/rx, CV_32F),
     render(src.rows, src.cols, CV_8U, cv::Scalar(255));
 
-    ascii_art_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    char *s;
-    s = (char*)dst.ptr<uint8_t>();
+    ascii_art_halide(src.ptr<uint8_t>(), dst.ptr<float>(), src.rows, src.cols);
     std::vector<std::pair<float, char>> lums={};
     std::vector<char> symbols(256);
     float lum_min = 255;
@@ -42,14 +40,16 @@ TEST(ascii_art, halide){
     for(int i = 0; i < dst.rows; i++)
         for(int j = 0; j < dst.cols; j++){
 
-            uint8_t lum = dst.at<uint8_t>(i, j);
-            int index = (static_cast<float>(lum)/255)*(lums.size()-1);
+            float lum = dst.at<float>(i, j);
+            int index = (min(lum, 255.0f)/255.0f)*(lums.size()-1);
+            std::cout << lum << std::endl;
+            CV_Assert(index < lums.size());
             cv::Mat roi =  render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry);
             cv::putText(roi, std::string(1, grey_scale[index]), cv::Point(1, ry-1),
                 cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
         }
 
-    imwrite("res_cat_ascii_halide.png", render);
-    imwrite("src_cat_ascii_halide.png", src);
-    ASSERT_EQ(true, true);
+    // imwrite("res_cat_ascii_halide.png", render);
+    // imwrite("src_cat_ascii_halide.png", src);
+    // ASSERT_EQ(true, true);
 }
