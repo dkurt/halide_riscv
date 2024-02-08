@@ -22,13 +22,13 @@ static const int norm_h = 3;
 static const int rx = 15;
 static const int ry = 19;
 
-void ascii_art_halide(uint8_t* src, uint8_t* dst, int input_height, int input_width) {
+void ascii_art_halide(uint8_t* src, float* dst, int input_height, int input_width) {
     int output_width = input_width / rx;
     int output_height = input_height / ry;
- 
-    
+
+
     Buffer<uint8_t> input(src, {input_width, input_height});
-    Buffer<uint8_t> output(dst, {input_width / rx, input_height / ry});
+    Buffer<float> output(dst, {input_width / rx, input_height / ry});
 #ifdef __riscv
     ascii_art(input, output);
 #else
@@ -38,17 +38,24 @@ void ascii_art_halide(uint8_t* src, uint8_t* dst, int input_height, int input_wi
 
         Var x("x"), y("y");
         RDom r(0, rx, 0, ry);
-        Expr s = sum(cast<uint32_t>(input(x*rx + r.x, y*ry + r.y)));
-    
+
+        Func casted;
+        casted(x, y) = cast<float>(input(x, y));
+
+        Expr s = sum(casted(x*rx + r.x, y*ry + r.y));
+
         //s = Halide::clamp(s/(rx*ry),0,255);
-        ascii(x, y) = cast<uint8_t>(s/(rx*ry));
-        // ascii.realize(output);
+        ascii(x, y) = s/(rx*ry);
+
+        casted.compute_root();
+        ascii.vectorize(x, 4);
+
         // Compile
         Target target;
         target.os = Target::OS::Linux;
         target.arch = Target::Arch::RISCV;
         target.bits = 64;
-        //target.vector_bits = factor * sizeof(uint8_t) * 8;
+        target.vector_bits = 128;
 
         // Tested XuanTie C906 has 128-bit vector unit
         CV_Assert(target.vector_bits <= 128);
@@ -76,11 +83,11 @@ void ascii_art_ref(const uint8_t* src, uint8_t* dst, int input_height, int input
             float lum = 0;
             for(int j = 0; j < ry; ++j){
                 for(int i = 0; i < rx; ++i){
-                    lum += src[ (y * ry + j) * input_width + x * rx +i];   
-                }   
+                    lum += src[ (y * ry + j) * input_width + x * rx +i];
+                }
             }
             dst[y * output_width + x] = static_cast<uint8_t>(lum/(rx*ry));
             lum = 0;
-        }   
+        }
     }
 }
