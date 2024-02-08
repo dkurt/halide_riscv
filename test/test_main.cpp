@@ -165,7 +165,7 @@ TEST(convolution_nhwc, halide) {
 
 
 TEST(idw, halide) {
-    Mat src(height, width, CV_8U); 
+    Mat src(height, width, CV_8U);
     Mat dst(height, width, CV_8U), cl_dst(height, width, CV_8UC3), dst_h(height, width, CV_8U), cl_dst_h(height, width, CV_8UC3);
     // randu(src, 0, 256);
 

@@ -20,6 +20,9 @@ static const float cr = 0.0;
 static const uint8_t step_bound = 255;
 static const uint8_t upper_bound = 4;
 
+static const int parallel_factor = 4;
+static const int vector_factor = 4;
+
 // no Expr type in riscv build
 #ifndef __riscv
 // src :: Int -> fraction :: Float -> Float
@@ -67,7 +70,6 @@ void halide_julia(uint8_t* dst, int height, int width) {
     halide_julia_rv(output);
 #else
     static Func julia("julia");
-    static const int vector_factor = 16;
 
     if (!julia.defined()) {
         Var x, y;
@@ -91,12 +93,18 @@ void halide_julia(uint8_t* dst, int height, int width) {
         Expr esc_cond = HComplex(julia(x, y, index)).magnitude_squared() < upper_bound;
         Tuple first_escape = argmin(esc_cond);
 
+        julia.update(0).vectorize(x, 4);
+
         // proj to result
         Func result;
         result(x, y) = cast<uint8_t>(first_escape[0]);
 
-        julia.compute_at(result, y);
-        julia.update(0).vectorize(x, 4);
+        Var yi, yo;
+        result.split(y, yo, yi, parallel_factor);
+        result.parallel(yo);
+
+        julia.store_at(result, yo);
+        julia.compute_at(result, yi);
 
         Target target;
         target.os = Target::OS::Linux;
