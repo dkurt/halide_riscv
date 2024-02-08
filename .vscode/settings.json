@@ -5,6 +5,8 @@
         "iostream": "cpp",
         "cmath": "cpp",
         "optional": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "ostream": "cpp",
+        "numbers": "cpp"
     }
 }

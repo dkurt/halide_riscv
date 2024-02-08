@@ -167,6 +167,8 @@ TEST(convolution_nhwc, halide) {
 TEST(idw, halide) {
     Mat src(height, width, CV_8U); 
     Mat dst(height, width, CV_8U), cl_dst(height, width, CV_8UC3), dst_h(height, width, CV_8U), cl_dst_h(height, width, CV_8UC3);
+    Mat dst_hp(height, width, CV_8U), cl_dst_hp(height, width, CV_8UC3), dst_hv(height, width, CV_8U), cl_dst_hv(height, width, CV_8UC3), 
+        dst_hpv(height, width, CV_8U), cl_dst_hpv(height, width, CV_8UC3);
     // randu(src, 0, 256);
 
     // 300 elems (100 points)
@@ -176,13 +178,25 @@ TEST(idw, halide) {
 
     idw_ref(NULL, dst.ptr<uint8_t>(), height, width, points, weights);
     idw_halide(NULL, dst_h.ptr<uint8_t>(), height, width, points, weights);
+    idw_halide_parallel(NULL, dst_hp.ptr<uint8_t>(), height, width, points, weights);
+    idw_halide_vec(NULL, dst_hv.ptr<uint8_t>(), height, width, points, weights);
+    idw_halide_parallel_vec(NULL, dst_hpv.ptr<uint8_t>(), height, width, points, weights);
 
     applyColorMap(dst, cl_dst, COLORMAP_JET);
     applyColorMap(dst_h, cl_dst_h, COLORMAP_JET);
+    applyColorMap(dst_hp, cl_dst_hp, COLORMAP_JET);
+    applyColorMap(dst_hv, cl_dst_hv, COLORMAP_JET);
+    applyColorMap(dst_hpv, cl_dst_hpv, COLORMAP_JET);
 
     // imwrite("src.png", src);
     imwrite("res.png", dst);
     imwrite("cres.png", cl_dst);
     imwrite("res_halide.png", dst_h);
     imwrite("cres_halide.png", cl_dst_h);
+    imwrite("res_halide_par.png", dst_hp);
+    imwrite("cres_halide_par.png", cl_dst_hp);
+    imwrite("res_halide_vec.png", dst_hv);
+    imwrite("cres_halide_vec.png", cl_dst_hv);
+    imwrite("res_halide_parvec.png", dst_hpv);
+    imwrite("cres_halide_parvec.png", cl_dst_hpv);
 }

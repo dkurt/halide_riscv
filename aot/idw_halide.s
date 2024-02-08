@@ -2,11 +2,11 @@
 	.attribute	4, 16
 	.attribute	5, "rv64gcv0p7"
 	.file	"halide_buffer_t.cpp"
-	.section	.text.idw,"ax",@progbits
-	.globl	idw                             # -- Begin function idw
+	.section	.text.idw_halide_,"ax",@progbits
+	.globl	idw_halide_                     # -- Begin function idw_halide_
 	.p2align	1
-	.type	idw,@function
-idw:                                    # @idw
+	.type	idw_halide_,@function
+idw_halide_:                            # @idw_halide_
 # %bb.0:                                # %entry
 	addi	sp, sp, -96
 	sd	ra, 88(sp)                      # 8-byte Folded Spill
@@ -129,13 +129,13 @@ idw:                                    # @idw
 	slti	a1, a4, 1
 	or	a0, a0, a1
 	bnez	a0, .LBB0_20
-# %bb.10:                               # %"for idw.s0.y.rebased.preheader"
+# %bb.10:                               # %"for idw_halide_.s0.y.rebased.preheader"
 	blez	s7, .LBB0_20
-# %bb.11:                               # %"for idw.s0.y.rebased.us.preheader"
+# %bb.11:                               # %"for idw_halide_.s0.y.rebased.us.preheader"
 	li	s0, 0
 	slli	s2, s7, 2
 	mv	s1, s5
-.LBB0_12:                               # %"for idw.s0.y.rebased.us"
+.LBB0_12:                               # %"for idw_halide_.s0.y.rebased.us"
                                         # =>This Inner Loop Header: Depth=1
 	slli	a0, s0, 2
 	add	a0, a0, s10
@@ -145,19 +145,19 @@ idw:                                    # @idw
 	addi	s1, s1, -1
 	addw	s0, s0, s6
 	bnez	s1, .LBB0_12
-# %bb.13:                               # %"for idw.s1.y.rebased.preheader"
+# %bb.13:                               # %"for idw_halide_.s1.y.rebased.preheader"
 	blez	s7, .LBB0_20
-# %bb.14:                               # %"for idw.s1.y.rebased.us.preheader"
+# %bb.14:                               # %"for idw_halide_.s1.y.rebased.us.preheader"
 	li	a6, 0
 	addi	s8, s8, 4
-.LBB0_15:                               # %"for idw.s1.y.rebased.us"
+.LBB0_15:                               # %"for idw_halide_.s1.y.rebased.us"
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_16 Depth 2
                                         #       Child Loop BB0_17 Depth 3
 	li	a1, 0
 	mulw	a7, s6, a6
 	add	a3, s4, a6
-.LBB0_16:                               # %"for idw.s1.x.rebased.us"
+.LBB0_16:                               # %"for idw_halide_.s1.x.rebased.us"
                                         #   Parent Loop BB0_15 Depth=1
                                         # =>  This Loop Header: Depth=2
                                         #       Child Loop BB0_17 Depth 3
@@ -169,7 +169,7 @@ idw:                                    # @idw
 	li	a0, 100
 	mv	s1, s8
 	mv	s0, s9
-.LBB0_17:                               # %"for idw.s1.r4$x.us"
+.LBB0_17:                               # %"for idw_halide_.s1.r4$x.us"
                                         #   Parent Loop BB0_15 Depth=1
                                         #     Parent Loop BB0_16 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
@@ -188,12 +188,12 @@ idw:                                    # @idw
 	addi	s0, s0, 4
 	addi	s1, s1, 12
 	bnez	a0, .LBB0_17
-# %bb.18:                               # %"end for idw.s1.r4$x.us"
+# %bb.18:                               # %"end for idw_halide_.s1.r4$x.us"
                                         #   in Loop: Header=BB0_16 Depth=2
 	addi	a1, a1, 1
 	fsw	ft0, 0(t0)
 	bne	a1, s7, .LBB0_16
-# %bb.19:                               # %"end for idw.s1.x.rebased.loopexit.us"
+# %bb.19:                               # %"end for idw_halide_.s1.x.rebased.loopexit.us"
                                         #   in Loop: Header=BB0_15 Depth=1
 	addi	a6, a6, 1
 	bne	a6, s5, .LBB0_15
@@ -214,37 +214,37 @@ idw:                                    # @idw
 	addi	sp, sp, 96
 	ret
 .Lfunc_end0:
-	.size	idw, .Lfunc_end0-idw
+	.size	idw_halide_, .Lfunc_end0-idw_halide_
                                         # -- End function
-	.section	.text.idw_argv,"ax",@progbits
-	.globl	idw_argv                        # -- Begin function idw_argv
+	.section	.text.idw_halide__argv,"ax",@progbits
+	.globl	idw_halide__argv                # -- Begin function idw_halide__argv
 	.p2align	1
-	.type	idw_argv,@function
-idw_argv:                               # @idw_argv
+	.type	idw_halide__argv,@function
+idw_halide__argv:                       # @idw_halide__argv
 # %bb.0:                                # %entry
 	addi	sp, sp, -16
 	sd	ra, 8(sp)                       # 8-byte Folded Spill
 	ld	a0, 0(a0)
-	call	idw@plt
+	call	idw_halide_@plt
 	li	a0, 0
 	ld	ra, 8(sp)                       # 8-byte Folded Reload
 	addi	sp, sp, 16
 	ret
 .Lfunc_end1:
-	.size	idw_argv, .Lfunc_end1-idw_argv
+	.size	idw_halide__argv, .Lfunc_end1-idw_halide__argv
                                         # -- End function
-	.section	.text.idw_metadata,"ax",@progbits
-	.globl	idw_metadata                    # -- Begin function idw_metadata
+	.section	.text.idw_halide__metadata,"ax",@progbits
+	.globl	idw_halide__metadata            # -- Begin function idw_halide__metadata
 	.p2align	1
-	.type	idw_metadata,@function
-idw_metadata:                           # @idw_metadata
+	.type	idw_halide__metadata,@function
+idw_halide__metadata:                   # @idw_halide__metadata
 # %bb.0:                                # %entry
 .Lpcrel_hi2:
-	auipc	a0, %pcrel_hi(.Lidw_metadata_storage)
+	auipc	a0, %pcrel_hi(.Lidw_halide__metadata_storage)
 	addi	a0, a0, %pcrel_lo(.Lpcrel_hi2)
 	ret
 .Lfunc_end2:
-	.size	idw_metadata, .Lfunc_end2-idw_metadata
+	.size	idw_halide__metadata, .Lfunc_end2-idw_halide__metadata
                                         # -- End function
 	.type	.Lb2.shape,@object              # @b2.shape
 	.section	.rodata,"a",@progbits
@@ -314,8 +314,8 @@ idw_metadata:                           # @idw_metadata
 	.type	.Lstr,@object                   # @str
 	.p2align	5, 0x0
 .Lstr:
-	.asciz	"idw"
-	.size	.Lstr, 4
+	.asciz	"idw_halide_"
+	.size	.Lstr, 12
 
 	.type	.L__unnamed_2,@object           # @1
 	.section	.data.rel.ro,"aw",@progbits
@@ -342,16 +342,16 @@ idw_metadata:                           # @idw_metadata
 	.asciz	"riscv-64-linux-no_asserts-no_runtime-rvv-vector_bits_128"
 	.size	.Lstr.4, 57
 
-	.type	.Lidw_metadata_storage,@object  # @idw_metadata_storage
+	.type	.Lidw_halide__metadata_storage,@object # @idw_halide__metadata_storage
 	.section	.data.rel.ro,"aw",@progbits
 	.p2align	4, 0x0
-.Lidw_metadata_storage:
+.Lidw_halide__metadata_storage:
 	.word	1                               # 0x1
 	.word	1                               # 0x1
 	.quad	.L__unnamed_2
 	.quad	.Lstr.4
 	.quad	.Lstr
-	.size	.Lidw_metadata_storage, 32
+	.size	.Lidw_halide__metadata_storage, 32
 
 	.ident	"clang version 16.0.0 (https://github.com/dkurt/llvm-rvv-071 b027aa1b59c9f53240bdc836f39656723fdf9df0)"
 	.ident	"clang version 16.0.0 (https://github.com/dkurt/llvm-rvv-071 b027aa1b59c9f53240bdc836f39656723fdf9df0)"
