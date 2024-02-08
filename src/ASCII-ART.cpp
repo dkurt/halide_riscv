@@ -36,14 +36,14 @@ void ascii_art_halide(uint8_t* src, float* dst, int input_height, int input_widt
     if (!ascii.defined()) {
         // Func padded = BoundaryConditions::constant_exterior(input, 0);
 
-        Var x("x"), y("y");
+        Var x("x"), y("y"), yo("yo"), yi("yi");
         RDom r(0, rx, 0, ry);
 
         Func casted;
-        casted(x, y) = cast<float>(input(x, y));
+        casted(x, y) = cast<uint32_t>(input(x, y));
 
         Expr s = sum(casted(x*rx + r.x, y*ry + r.y));
-
+        ascii.bound(x, 0, 10).bound(y, 0, 10).split(y, yo, yi, 5).parallel(yo);
         //s = Halide::clamp(s/(rx*ry),0,255);
         ascii(x, y) = s/(rx*ry);
 
