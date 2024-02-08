@@ -266,11 +266,7 @@ idw:                                    # @idw
 	vlwu.v	v8, (s10)
 	vfmul.vv	v8, v9, v8
 	vfmv.s.f	v9, ft0
-<<<<<<< HEAD
-	vfredusum.vs	v8, v8, v9
-=======
 	vfredsum.vs	v8, v8, v9
->>>>>>> a6d731b66e883d018fbaefd444edc23e7aa09c80
 	vfmv.f.s	ft0, v8
 	addi	s5, s5, -1
 	addi	s10, s10, 16
