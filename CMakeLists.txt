@@ -67,6 +67,7 @@ file(GLOB SOURCES src/*.cpp)
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "riscv64")
   file(GLOB ASM aot/*.s)
   list(APPEND SOURCES ${ASM})
+  list(APPEND SOURCES aot/halide_runtime.o)
 endif()
 
 add_library(algos SHARED ${SOURCES})
@@ -92,6 +93,7 @@ target_include_directories(algos PRIVATE
 target_link_libraries(algos
   "${binary_dir}/install/lib/libopencv_core.so"
   "${binary_dir}/install/lib/libopencv_imgproc.so"
+  "${binary_dir}/install/lib/libopencv_imgcodecs.so"
 )
 
 

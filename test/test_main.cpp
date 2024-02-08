@@ -22,145 +22,27 @@ static const int rx = 15;
 static const int ry = 19;
 const std::string grey_scale = "$@B%8&WM#*OAHKDPQWMRZO0QLCJUYXVJFT/|()1{}[]?-_+~<>i!lI;:,^`'.  ";
 
+static const int julia_width = 200;
+static const int julia_height = 200;
+
 CV_TEST_MAIN("")
 
-TEST(ascii_art_ref, opencv){
-    for(int i = 0; i < grey_scale.size(); ++i){
-        cv::Mat m(20, 15, CV_8U, cv::Scalar(255, 255, 255));
-        std::string s(1,grey_scale[i] );
-        cv::putText(m, s, cv::Point(1, 15),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
-        std::string filename = s + ".png";
-        cv::imwrite(filename, m);       
-    }
+TEST(julia, ref) {
+    Mat dst(julia_height, julia_width, CV_8UC1, Scalar(0));
 
-    ASSERT_EQ(true, true);
+    julia_ref(dst.ptr<uint8_t>(), dst.rows, dst.cols);
+
+    imwrite("julia_ref.png", dst);
 }
 
-TEST(test_ascii_cat_ref, opencv){
-    cv::Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    cv::Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
-    render(src.rows, src.cols, CV_8U, cv::Scalar(255));
+TEST(julia, halide) {
+    Mat dst(julia_height, julia_width, CV_8UC1, Scalar(0));
 
-    ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    char *s;
-    s = (char*)dst.ptr<uint8_t>();
-    std::vector<std::pair<float, char>> lums={};
-    std::vector<char> symbols(256);
-    float lum_min = 255;
-    float lum_max = 0;
-    for(int i = 0; i < grey_scale.size(); i++){
-        cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
-        cv::putText(tmp, std::string(1, grey_scale[i]), cv::Point(1, ry-1), 
-            cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
+    halide_julia(dst.ptr<uint8_t>(), dst.rows, dst.cols);
 
-        float lum = 0;
-        uint8_t *stmp;
-        stmp = tmp.ptr<uint8_t>();
-        for(int y = 0; y < tmp.rows; y++){
-            for(int x = 0; x < tmp.cols; x++){
-                lum += stmp[y*rx+x];
-            }
-        }
-        std::pair<float, char> a(lum/(rx*ry), grey_scale[i]);
-        lums.push_back(a);
-       
-    }
-    std::sort(lums.begin(), lums.end());
-
-
-    for(int i = 0; i < dst.rows; i++)
-        for(int j = 0; j < dst.cols; j++){
-            uint8_t lum = dst.at<uint8_t>(i, j);
-            int index = (static_cast<float>(lum)/255)*(lums.size()-1);
-            cv::Mat roi =  render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry);
-            cv::putText(roi, std::string(1, grey_scale[index]), cv::Point(1, ry-1), 
-                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-
-        }
-    
-    cv::imwrite("res_cat_ascii_ref.png", render);
-    cv::imwrite("src_cat_ascii_ref.png", src);
-    ASSERT_EQ(true, true);
+    imwrite("julia_halide.png", dst);
 }
 
-
-
-TEST(test_ascii_cat_halide, opencv){
-    cv::Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    cv::Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
-    render(src.rows, src.cols, CV_8U, cv::Scalar(255));
-
-    ascii_art_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    char *s;
-    s = (char*)dst.ptr<uint8_t>();
-    std::vector<std::pair<float, char>> lums={};
-    std::vector<char> symbols(256);
-    float lum_min = 255;
-    float lum_max = 0;
-    for(int i = 0; i < grey_scale.size(); i++){
-        cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
-        cv::putText(tmp, std::string(1, grey_scale[i]), cv::Point(1, ry-1), 
-            cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-
-        float lum = 0;
-        uint8_t *stmp;
-        stmp = tmp.ptr<uint8_t>();
-        for(int y = 0; y < tmp.rows; y++){
-            for(int x = 0; x < tmp.cols; x++){
-                lum += stmp[y*rx+x];
-            }
-        }
-        std::pair<float, char> a(lum/(rx*ry), grey_scale[i]);
-        lums.push_back(a);
-       
-    }
-    std::sort(lums.begin(), lums.end());
-
-    for(int i = 0; i < dst.rows; i++)
-        for(int j = 0; j < dst.cols; j++){
-            
-            uint8_t lum = dst.at<uint8_t>(i, j);
-            int index = (static_cast<float>(lum)/255)*(lums.size()-1);
-            cv::Mat roi =  render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry);
-            cv::putText(roi, std::string(1, grey_scale[index]), cv::Point(1, ry-1), 
-                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);         
-        }
-    
-    imwrite("res_cat_ascii_halide.png", render);
-    imwrite("src_cat_ascii_halide.png", src);
-    ASSERT_EQ(true, true);
-}
-/*
-TEST(test_halide, opencv){
-    Mat src = imread("cat.jpeg", cv::IMREAD_GRAYSCALE);
-    Mat dst(src.rows/ry, src.cols/rx, CV_8U), 
-    render(src.rows, src.cols, CV_8U);
-
-    ascii_art_ref(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    char *s;
-    s = (char*)dst.ptr<uint8_t>();
-
-    imwrite("src_ascii.png", src);
-    for(int i = 0; i < dst.rows; i++)
-        for(int j = 0; j < dst.cols; j++){
-
-            //cv::putText(render,s, cv::Point(1, i),cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
-            uint8_t lum = dst.at<uint8_t>(i, j);
-            render.colRange(j*rx, (j+1)*rx).rowRange(i*ry, (i+1)*ry).setTo(255-lum);
-            
-        }
-    // for(int i = 0; i < sizeof(s)/sizeof(char); i++){
-    //     cv::Mat tmp(ry, rx, CV_8U, cv::Scalar(255));
-    //     cv::putText(tmp, std::string(1, s[i]), cv::Point(1, ry-1), 
-    //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0), 1, cv::LINE_AA);
-
-    //     tmp.copyTo(render(cv::Rect((i%render.cols)*rx,( i%render.rows)*ry, rx, ry)));
-    // }
-    imwrite("res_ascii.png", render);
-    //imwrite("res_ascii.png", dst);
-    ASSERT_EQ(true, true);
-}*/
-/*
 TEST(histogram, opencv) {
     Mat src(height, width, CV_8UC3), dst(3, 256, CV_32F), ref(3, 256, CV_32S);
     randu(src, 0, 256);
@@ -284,4 +166,28 @@ TEST(convolution_nhwc, halide) {
     ASSERT_LE(norm(ref.reshape(1, 1), dst.reshape(1, 1), NORM_INF), 4e-5f);
 }
 
-#endif  */
+#endif  // HAVE_OPENCV_DNN
+
+
+TEST(idw, halide) {
+    Mat src(height, width, CV_8U); 
+    Mat dst(height, width, CV_8U), cl_dst(height, width, CV_8UC3), dst_h(height, width, CV_8U), cl_dst_h(height, width, CV_8UC3);
+    // randu(src, 0, 256);
+
+    // 300 elems (100 points)
+    int points[] = {0, 0, 72, 0, 213, 79, 0, 426, 60, 0, 640, 76, 0, 853, 128, 0, 1066, 67, 0, 1280, 65, 0, 1493, 64, 0, 1706, 60, 0, 1920, 61, 120, 0, 81, 120, 213, 79, 120, 426, 58, 120, 640, 132, 120, 853, 149, 120, 1066, 142, 120, 1280, 64, 120, 1493, 69, 120, 1706, 65, 120, 1920, 64, 240, 0, 75, 240, 213, 68, 240, 426, 140, 240, 640, 153, 240, 853, 145, 240, 1066, 132, 240, 1280, 152, 240, 1493, 125, 240, 1706, 66, 240, 1920, 58, 360, 0, 78, 360, 213, 60, 360, 426, 139, 360, 640, 168, 360, 853, 154, 360, 1066, 138, 360, 1280, 145, 360, 1493, 160, 360, 1706, 68, 360, 1920, 60, 480, 0, 77, 480, 213, 59, 480, 426, 165, 480, 640, 183, 480, 853, 166, 480, 1066, 142, 480, 1280, 123, 480, 1493, 155, 480, 1706, 144, 480, 1920, 60, 600, 0, 83, 600, 213, 65, 600, 426, 178, 600, 640, 184, 600, 853, 138, 600, 1066, 124, 600, 1280, 132, 600, 1493, 175, 600, 1706, 175, 600, 1920, 60, 720, 0, 86, 720, 213, 60, 720, 426, 182, 720, 640, 179, 720, 853, 152, 720, 1066, 140, 720, 1280, 115, 720, 1493, 156, 720, 1706, 172, 720, 1920, 65, 840, 0, 90, 840, 213, 69, 840, 426, 164, 840, 640, 186, 840, 853, 146, 840, 1066, 147, 840, 1280, 122, 840, 1493, 152, 840, 1706, 166, 840, 1920, 69, 960, 0, 85, 960, 213, 67, 960, 426, 186, 960, 640, 169, 960, 853, 162, 960, 1066, 147, 960, 1280, 124, 960, 1493, 149, 960, 1706, 157, 960, 1920, 69, 1080, 0, 85, 1080, 213, 70, 1080, 426, 193, 1080, 640, 192, 1080, 853, 155, 1080, 1066, 135, 1080, 1280, 120, 1080, 1493, 138, 1080, 1706, 128, 1080, 1920, 70};
+    // 100 elems
+    float weights[] = {0.04053167, -0.07571915, 0.0025228, 0.1974248, -0.14461569, 0.30541419, -0.06167972, -0.04958807, 0.00050641, -0.02023852, -0.05910183, -0.05512609, 0.37617088, -0.15904428, -0.10229038, -0.34355378, 0.39128499, 0.16502984, -0.00916588, -0.05264022, 0.01936275, 0.07156495, -0.35144818, -0.01955447, 0.07818357, 0.10850975, -0.34972095, -0.12186563, 0.04116577, 0.00378971, -0.05382689, 0.12480152, 0.0629668, 0.01070963, 0.03499341, 0.03218783, -0.00559502, -0.21214646, 0.34402987, -0.0246006, -0.01532894, 0.14944613, -0.12848858, -0.04539923, -0.1401344, -0.08143395, 0.18241941, 0.08353522, -0.20102434, 0.05168503, -0.05897654, 0.09669851, -0.13024191, -0.02125988, 0.19499928, 0.12311092, -0.05857943, -0.14954968, -0.19763496, 0.1172914, -0.04584096, 0.20130274, -0.198312, 0.04763513, -0.05524272, -0.07034198, 0.15155036, 0.0718368, -0.09612551, 0.09076872, -0.0863682, 0.08457486, 0.05520895, -0.10551672, 0.12577908, -0.05857014, 0.03529613, 0.01300365, -0.09736055, 0.06580921, -0.03074898, 0.1528181, -0.18295799, 0.18713497, -0.07368328, -0.06431868, 0.02485816, -0.02782657, -0.15182979, 0.06845911, -0.01974711, 0.23508139, -0.23124445, -0.1202987, 0.05380124, 0.04331648, 0.06285662, -0.01171756, 0.01128749, 0.06012665};
+
+    idw_ref(NULL, dst.ptr<uint8_t>(), height, width, points, weights);
+    idw_halide(NULL, dst_h.ptr<uint8_t>(), height, width, points, weights);
+
+    applyColorMap(dst, cl_dst, COLORMAP_JET);
+    applyColorMap(dst_h, cl_dst_h, COLORMAP_JET);
+
+    // imwrite("src.png", src);
+    imwrite("res.png", dst);
+    imwrite("cres.png", cl_dst);
+    imwrite("res_halide.png", dst_h);
+    imwrite("cres_halide.png", cl_dst_h);
+}
