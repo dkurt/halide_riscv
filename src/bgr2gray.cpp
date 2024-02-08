@@ -60,7 +60,6 @@ void bgr2gray_interleaved_halide(uint8_t* src, uint8_t* dst, int height, int wid
 
         int factor = 16;
         f.vectorize(x, factor);
-    //    f.realize(output);
 
         // Compile
         Target target;

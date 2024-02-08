@@ -8,19 +8,16 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License
+// limitations under the License.
 
 #include <opencv2/ts.hpp>
-#include <string>
+
 #include "algos.hpp"
 
 using namespace cv;
 
 const int width = 1920;
 const int height = 1080;
-static const int rx = 15;
-static const int ry = 19;
-const std::string grey_scale = "$@B%8&WM#*OAHKDPQWMRZO0QLCJUYXVJFT/|()1{}[]?-_+~<>i!lI;:,^`'.  ";
 
 static const int julia_width = 200;
 static const int julia_height = 200;
@@ -80,8 +77,6 @@ TEST(bgr2gray_interleaved, halide) {
     randu(src, 0, 256);
 
     bgr2gray_interleaved_halide(src.ptr<uint8_t>(), dst.ptr<uint8_t>(), src.rows, src.cols);
-    cv::imwrite("src.png", src);
-    cv::imwrite("res.png", dst);
     bgr2gray_ref(src.ptr<uint8_t>(), ref.ptr<uint8_t>(), src.rows, src.cols);
 
     ASSERT_LE(norm(ref, dst, NORM_INF), 0);
