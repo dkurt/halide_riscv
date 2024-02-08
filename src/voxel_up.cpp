@@ -3,9 +3,11 @@
 
 #ifdef __riscv
   #include <HalideBuffer.h>
+  #include "deconvolution.h"
   using namespace Halide::Runtime;
 #else
   #include <Halide.h>
+  using namespace Halide;
 #endif
 namespace voxel_upscale_const
 {
@@ -27,10 +29,13 @@ using namespace voxel_upscale_const;
 void voxel_up( float* src, float* kernel, float* dst,
                     int inpChannels, int width, int height, int depth){
 
-    Halide::Buffer<float> input(src, {width, height, depth, inpChannels});
-    Halide::Buffer<float> weights(kernel, { ker_width, ker_height, ker_depth});
-    Halide::Buffer<float> output(dst, { width * scale_width, height * scale_height, depth * scale_depth, inpChannels});
+    Buffer<float> input(src, {width, height, depth, inpChannels});
+    Buffer<float> weights(kernel, { ker_width, ker_height, ker_depth});
+    Buffer<float> output(dst, { width * scale_width, height * scale_height, depth * scale_depth, inpChannels});
 
+#ifdef __riscv
+    deconvolution(input, output);
+#else
     static Halide::Func deconv("deconvolution");
     if (!deconv.defined()) {
         input.set_name("input");
@@ -69,9 +74,27 @@ void voxel_up( float* src, float* kernel, float* dst,
               .bound(d, 0, depth * scale_depth)
               .bound(c, 0, inpChannels);
 
-        deconv.realize(output);
+        // deconv.realize(output);
 
+        // Compile
+        Halide::Target target;
+        target.os = Halide::Target::OS::Linux;
+        target.arch = Halide::Target::Arch::RISCV;
+        target.bits = 64;
+
+        std::vector<Halide::Target::Feature> features;
+        features.push_back(Halide::Target::NoAsserts);
+        features.push_back(Halide::Target::NoRuntime);
+        target.set_features(features);
+
+        std::cout << target << std::endl;
+        deconv.print_loop_nest();
+
+        // Dump AOT code
+        deconv.compile_to_header("deconvolution.h", {input}, "deconvolution", target);
+        deconv.compile_to_assembly("deconvolution.s", {input}, "deconvolution", target);
     }
+#endif
 }
 
 void upscale(std::vector<std::string> img_path, int width, int height)
