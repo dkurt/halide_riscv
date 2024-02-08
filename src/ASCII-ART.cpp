@@ -42,6 +42,9 @@ void ascii_art_halide(uint8_t* src, uint8_t* dst, int input_height, int input_wi
     
         //s = Halide::clamp(s/(rx*ry),0,255);
         ascii(x, y) = cast<uint8_t>(s/(rx*ry));
+
+        ascii.bound(x, 0, 1920).bound(y, 0, 1080).split(y, yo, yi, 1080/4).parallel(yo);
+        
         // ascii.realize(output);
         // Compile
         Target target;
