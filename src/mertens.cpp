@@ -45,7 +45,7 @@ try {
 
         f(x, y) = sum(input1(x + r.x, y + r.y) * weights(r.x + 1, r.y + 1));
 
-        // f.vectorize(x, 4);
+        f.vectorize(x, 4);
 
         Target target;
         target.os = Target::OS::Linux;
