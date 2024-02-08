@@ -30,14 +30,21 @@ void idw_halide(const uint8_t* src, uint8_t* dst, int height, int width, int* po
     Buffer<int> points(pointsBuf, {pointCount*3});
     Buffer<float> weights(weightsBuf, {pointCount});
 #ifdef __riscv
+<<<<<<< HEAD
     idw_halide_(mask);
 #else
     static Func f("idw_halide_");
+=======
+    idw(mask);
+#else
+    static Func f("idw");
+>>>>>>> 3b97268b3450a5058fcae17b4ec4a816f514fcb9
 
     // try {
     if (!f.defined()) {
         Var x("x"), y("y");
         RDom r(0, pointCount);
+<<<<<<< HEAD
         f(x, y) = 0.F;
         Expr x0 = points(3*r+1);
         Expr y0 = points(3*r);
@@ -183,6 +190,9 @@ void idw_halide_vec(const uint8_t* src, uint8_t* dst, int height, int width, int
     if (!f.defined()) {
         Var x("x"), y("y");
         RDom r(0, pointCount);
+=======
+
+>>>>>>> 3b97268b3450a5058fcae17b4ec4a816f514fcb9
         f(x, y) = 0.F;
         Expr x0 = points(3*r+1);
         Expr y0 = points(3*r);
@@ -194,7 +204,10 @@ void idw_halide_vec(const uint8_t* src, uint8_t* dst, int height, int width, int
         // f.vectorize(r, 8);
         const int factor = 4;
         f.update().atomic().vectorize(r, factor);
+<<<<<<< HEAD
         // f.update().parallel(x);
+=======
+>>>>>>> 3b97268b3450a5058fcae17b4ec4a816f514fcb9
 
         // Compile
         Target target;
@@ -213,11 +226,19 @@ void idw_halide_vec(const uint8_t* src, uint8_t* dst, int height, int width, int
         target.set_features(features);
 
         std::cout << target << std::endl;
+<<<<<<< HEAD
         // f.print_loop_nest();
 
         // Dump AOT code
         f.compile_to_header("idw_halide_vec.h", {}, "idw_halide_vec_", target);
         f.compile_to_assembly("idw_halide_vec.s", {}, "idw_halide_vec_", target);
+=======
+        f.print_loop_nest();
+
+        // Dump AOT code
+        f.compile_to_header("idw.h", {}, "idw", target);
+        f.compile_to_assembly("idw.s", {}, "idw", target);
+>>>>>>> 3b97268b3450a5058fcae17b4ec4a816f514fcb9
     }
     // }
     // catch (Halide::Error &e) {
@@ -238,6 +259,7 @@ void idw_halide_vec(const uint8_t* src, uint8_t* dst, int height, int width, int
     delete[] maskBuf;
 }
 
+<<<<<<< HEAD
 void idw_halide_parallel_vec(const uint8_t* src, uint8_t* dst, int height, int width, int* pointsBuf, float* weightsBuf) {
     float* maskBuf = new float[height * width]();
 
@@ -311,6 +333,8 @@ void idw_halide_parallel_vec(const uint8_t* src, uint8_t* dst, int height, int w
     delete[] maskBuf;
 }
 
+=======
+>>>>>>> 3b97268b3450a5058fcae17b4ec4a816f514fcb9
 void idw_ref(const uint8_t* src, uint8_t* dst, int height, int width, int* points, float* weights) {
     float* mask = new float[height * width]();
 
